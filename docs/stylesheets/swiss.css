@@ -33,3 +33,4 @@ code,kbd,pre{font-family:"Fragment Mono",ui-monospace,Menlo,Consolas,monospace}
 .md-nav__link--active,.md-nav__link:hover{color:#0a0a0a!important;font-weight:700}
 .md-nav__link--active{border-left:3px solid #ff5b00;padding-left:.4em}
 .md-footer,.md-footer-meta{background:#0a0a0a}
+.md-copyright,.md-copyright a{color:#ffffff}
