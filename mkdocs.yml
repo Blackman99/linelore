@@ -1,0 +1,29 @@
+site_name: linelore docs
+site_description: The pull request, linked issues and review comments behind any line of code, in one terminal command.
+site_url: https://blackman99.github.io/linelore/docs/
+repo_url: https://github.com/Blackman99/linelore
+repo_name: Blackman99/linelore
+edit_uri: edit/main/docs/
+copyright: MIT © 2026 Blackman99
+theme:
+  name: material
+  custom_dir: overrides
+  favicon: assets/logo.svg
+  logo: assets/logo.svg
+  font: false
+  palette:
+    scheme: default
+    primary: custom
+    accent: custom
+  features: [navigation.instant, navigation.top, content.code.copy, search.highlight, toc.follow]
+extra_css: [stylesheets/catalog.css]
+nav:
+  - Overview: index.md
+  - Install: install.md
+  - Usage: usage.md
+  - Configuration: config.md
+  - Command reference: reference.md
+  - FAQ: faq.md
+  - Blog: blog/index.md
+  - Home page ↗: https://blackman99.github.io/linelore/
+markdown_extensions: [admonition, attr_list, tables, {toc: {permalink: true}}, pymdownx.highlight, pymdownx.superfences]

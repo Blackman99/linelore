@@ -1,0 +1,6 @@
+:root{--md-primary-fg-color:#6b4a2b;--md-primary-bg-color:#f3e9cf;--md-accent-fg-color:#b5452f;--md-default-bg-color:#f6efdc;
+--md-text-font:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--md-code-font:"Courier Prime","Courier New",monospace}
+body{font-family:var(--md-text-font)}code,pre{font-family:var(--md-code-font)}
+.md-typeset h1,.md-typeset h2{font-weight:600;color:#2a2118}
+.md-typeset h2{border-bottom:1px solid #8fa6c0}
+.md-typeset pre>code{background:#f3e9cf;border-left:3px solid #b5452f}

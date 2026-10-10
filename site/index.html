@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>linelore · git blame tells you who. linelore tells you why.</title>
+<meta name="description" content="linelore pulls the pull request, linked issues and review comments behind any line of code, right in your terminal. Zero-dependency CLI.">
+<link rel="canonical" href="https://blackman99.github.io/linelore/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="logo-512.png">
+<meta name="theme-color" content="#6b4a2b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="linelore">
+<meta property="og:title" content="linelore: git blame tells you who. linelore tells you why.">
+<meta property="og:description" content="The pull request, linked issues and review comments behind any line of code, in one terminal command.">
+<meta property="og:url" content="https://blackman99.github.io/linelore/">
+<meta property="og:image" content="https://blackman99.github.io/linelore/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="linelore: library catalog cards for one line of code, stamped WHY">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="linelore: git blame tells you who. linelore tells you why.">
+<meta name="twitter:description" content="The PR, linked issues and review comments behind any line of code, in one terminal command.">
+<meta name="twitter:image" content="https://blackman99.github.io/linelore/og-image.png">
+<meta name="twitter:image:alt" content="linelore: library catalog cards for one line of code, stamped WHY">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="plate">
+  <img src="favicon.svg" alt="" width="44" height="44">
+  <span class="plate-name">linelore</span>
+  <nav><a href="docs/">Docs</a><a href="docs/blog/">Blog</a><a href="https://github.com/Blackman99/linelore">GitHub</a></nav>
+</header>
+
+<main>
+<section class="intro">
+  <p class="call">CALL No. 005.1 &middot; BLAME</p>
+  <h1><span>git blame</span> tells you who.<br><em>linelore</em> tells you why.</h1>
+  <p class="lede">Point it at a line. It pulls the catalog cards: the commit, the pull request that merged it, the issues it closed and the review comments left on that spot.</p>
+</section>
+
+<section class="drawer" aria-label="catalog cards for src/requests/adapters.py line 420">
+  <div class="drawer-label"><span>adapters.py : 420</span></div>
+  <div class="cards" id="cards">
+    <article class="card" data-tab="commit" style="--i:0">
+      <span class="tab">commit</span>
+      <p class="t">a62a2d35d9 &middot; 2024-05-22</p>
+      <p class="t">Ian Stapleton Cordasco</p>
+      <p class="t">Allow for overriding of specific pool key params</p>
+    </article>
+    <article class="card" data-tab="PR" style="--i:1">
+      <span class="tab">PR #6716</span>
+      <p class="t">merged 2024-05-24 by @sigmavirus24</p>
+      <p class="t">“Re-enables providing a custom SSLContext via a Transport Adapter, as broken in #6655.”</p>
+      <p class="t xref">see also: psf/requests#6655</p>
+    </article>
+    <article class="card" data-tab="issue" style="--i:2">
+      <span class="tab">fixes #6715</span>
+      <p class="t">SSLV3_ALERT_HANDSHAKE_FAILURE after upgrade 2.31.0 → 2.32.2</p>
+      <p class="t">state: closed</p>
+      <span class="stamp" aria-hidden="true">WHY</span>
+    </article>
+  </div>
+  <p class="caption">Real output from <code>linelore src/requests/adapters.py:420</code> on psf/requests. Tap a tab to pull a card.</p>
+</section>
+
+<section class="howto">
+  <h2>How to read a card</h2>
+  <ol class="ruled">
+    <li><b>Commit.</b> <code>git blame</code> on that one line, ignoring whitespace and anything in <code>.git-blame-ignore-revs</code>.<span class="margin">local, no network</span></li>
+    <li><b>Pull request.</b> The PR that merged the commit, with the first lines of its description: usually where the reason lives.<span class="margin">GitHub API</span></li>
+    <li><b>Issues.</b> Issues the PR closed, plus any other <code>#123</code> it mentions.<span class="margin">cross-references</span></li>
+    <li><b>Review notes.</b> Review comments left near that line, nearest first.<span class="margin">the argument you missed</span></li>
+  </ol>
+</section>
+
+<section class="slip">
+  <h2>Borrow it</h2>
+  <div class="slip-card">
+    <p class="t">pipx install git+https://github.com/Blackman99/linelore</p>
+    <p class="t">cd your-repo &amp;&amp; linelore path/to/file.py:42</p>
+    <button id="copy" type="button">Copy install line</button>
+    <span class="stamp small" id="slipstamp" aria-hidden="true">ISSUED</span>
+  </div>
+  <p class="fine">Python 3.9+, no dependencies. Uses your <code>gh</code> login or <code>GH_TOKEN</code> if present; works anonymously on public repos. <code>--json</code> for scripts and editors, <code>--offline</code> for local-only.</p>
+</section>
+</main>
+<footer>MIT &middot; <a href="https://github.com/Blackman99/linelore">Blackman99/linelore</a> &middot; <a href="docs/">documentation</a></footer>
+<script src="app.js" defer></script>
+</body>
+</html>
