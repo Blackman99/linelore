@@ -5,7 +5,7 @@ description: linelore 如何从 git blame 出发，顺着 commit → PR → 关�
 
 # git blame 只告诉你是谁改的，linelore 告诉你为什么
 
-*2026 年 10 月 · [English](git-blame-says-who-not-why.md)*
+*2026 年 10 月 · [English](git-blame-says-who-not-why.md) · 文中输出来自 linelore 0.1.1。0.1.0 不会标注远处的 review 评论，`--offline` 的提示文字也不同。*
 
 在读 [psf/requests](https://github.com/psf/requests) 的 `src/requests/adapters.py`，第 420 行是一段关于 `verify` 参数的 docstring。这行为什么写成这样？先问 `git blame`：
 

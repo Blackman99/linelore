@@ -5,7 +5,7 @@ description: How linelore follows a line of code from git blame to the commit, t
 
 # git blame tells you who. Here's how to get the why.
 
-*October 2026 · [中文版](git-blame-says-who-not-why-zh.md)*
+*October 2026 · [中文版](git-blame-says-who-not-why-zh.md) · Output below is from linelore 0.1.1. On 0.1.0, far-away review comments were not labelled and `--offline` printed a different note.*
 
 You are reading `src/requests/adapters.py` in [psf/requests](https://github.com/psf/requests) and line 420 is a docstring line about the `verify` argument. Why does this code look like this? `git blame` answers:
 
