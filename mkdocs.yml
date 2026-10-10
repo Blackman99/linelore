@@ -24,6 +24,9 @@ nav:
   - Configuration: config.md
   - Command reference: reference.md
   - FAQ: faq.md
-  - Blog: blog/index.md
+  - Blog:
+    - All posts: blog/index.md
+    - "git blame tells you who. Here's how to get the why.": blog/git-blame-says-who-not-why.md
+    - "git blame 只告诉你是谁改的，linelore 告诉你为什么": blog/git-blame-says-who-not-why-zh.md
   - Home page ↗: https://blackman99.github.io/linelore/
 markdown_extensions: [admonition, attr_list, tables, {toc: {permalink: true}}, pymdownx.highlight, pymdownx.superfences]

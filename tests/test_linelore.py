@@ -113,3 +113,17 @@ def test_demo_and_bad_target(capsys):
     assert "PR #812" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         cli.main(["nofile"])
+
+
+def test_rev_path_missing_from_worktree(tmp_path, capsys, monkeypatch):
+    _git(tmp_path, "init", "-q")
+    (tmp_path / "old").mkdir()
+    (tmp_path / "old" / "f.txt").write_text("one\ntwo\n")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "commit", "-qm", "add old/f")
+    _git(tmp_path, "tag", "v1")
+    _git(tmp_path, "rm", "-rq", "old")
+    _git(tmp_path, "commit", "-qm", "move away")
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(["old/f.txt:2", "--rev", "v1", "--offline", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out)["blame"]["summary"] == "add old/f"

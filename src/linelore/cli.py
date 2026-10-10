@@ -58,6 +58,8 @@ def main(argv=None):
     except argparse.ArgumentTypeError as e:
         ap.error(str(e))
     cwd = os.path.dirname(os.path.abspath(path)) or "."
+    while not os.path.isdir(cwd) and os.path.dirname(cwd) != cwd:
+        cwd = os.path.dirname(cwd)  # with --rev the file's directory may no longer exist
     try:
         root = repo_root(cwd)
         rel = os.path.relpath(os.path.abspath(path), root)
