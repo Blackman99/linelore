@@ -1,0 +1,35 @@
+/* linelore docs: Swiss poster language (see site/DESIGN.md). White, black, one orange. */
+@font-face{font-family:"Schibsted Grotesk";src:url(../assets/fonts/schibsted-grotesk.woff2) format("woff2");font-weight:400 900;font-display:swap}
+@font-face{font-family:"Fragment Mono";src:url(../assets/fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-display:swap}
+:root,[data-md-color-scheme=default]{
+  --md-primary-fg-color:#ffffff;--md-primary-fg-color--light:#ffffff;--md-primary-fg-color--dark:#ffffff;
+  --md-primary-bg-color:#0a0a0a;--md-primary-bg-color--light:#0a0a0a;
+  --md-accent-fg-color:#ff5b00;--md-accent-fg-color--transparent:rgba(255,91,0,.1);
+  --md-default-bg-color:#ffffff;--md-default-fg-color:#0a0a0a;
+  --md-typeset-a-color:#0a0a0a;
+  --md-code-bg-color:#ffffff;--md-code-fg-color:#0a0a0a;
+  --md-text-font:"Schibsted Grotesk";--md-code-font:"Fragment Mono";
+  --md-code-hl-color:#ff5b00;--md-code-hl-number-color:#0a0a0a;--md-code-hl-special-color:#0a0a0a;--md-code-hl-function-color:#0a0a0a;
+  --md-code-hl-constant-color:#0a0a0a;--md-code-hl-keyword-color:#0a0a0a;--md-code-hl-string-color:#0a0a0a;--md-code-hl-name-color:#0a0a0a;
+  --md-code-hl-operator-color:#0a0a0a;--md-code-hl-punctuation-color:#0a0a0a;--md-code-hl-comment-color:#0a0a0a;--md-code-hl-generic-color:#0a0a0a;--md-code-hl-variable-color:#0a0a0a;
+}
+.md-typeset a,.md-typeset a:visited{color:#0a0a0a}
+.md-typeset pre>code{background:#ffffff;outline:1px solid #e4e4e4}
+body,input{font-family:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif}
+code,kbd,pre{font-family:"Fragment Mono",ui-monospace,Menlo,Consolas,monospace}
+.md-header{border-bottom:2px solid #0a0a0a;box-shadow:none}
+.md-header__title{font-weight:800;letter-spacing:-.01em}
+.md-header__button.md-logo img{height:22px;width:auto}
+.md-tabs{background:#fff;color:#0a0a0a}
+.md-search__form{background:#fff;border:1px solid #e4e4e4;border-radius:0}
+.md-typeset h1{font-weight:900;color:#0a0a0a;letter-spacing:-.04em;line-height:.95;font-size:2.6em}
+.md-typeset h2{font-weight:800;letter-spacing:-.02em;border-top:2px solid #0a0a0a;padding-top:.5em}
+.md-typeset h3{font-weight:800}
+.md-typeset a{text-decoration:underline;text-decoration-color:#ff5b00;text-decoration-thickness:2px;text-underline-offset:3px}
+.md-typeset a:hover{color:#0a0a0a;text-decoration-thickness:4px}
+.md-typeset pre>code{border-left:4px solid #ff5b00;border-radius:0}
+.md-typeset code{border-radius:0}
+.md-typeset :not(pre)>code{background:#ffffff;outline:1px solid #e4e4e4;outline-offset:-1px}
+.md-nav__link--active,.md-nav__link:hover{color:#0a0a0a!important;font-weight:700}
+.md-nav__link--active{border-left:3px solid #ff5b00;padding-left:.4em}
+.md-footer,.md-footer-meta{background:#0a0a0a}

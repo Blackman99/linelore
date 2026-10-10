@@ -3,91 +3,120 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>linelore · git blame tells you who. linelore tells you why.</title>
-<meta name="description" content="linelore pulls the pull request, linked issues and review comments behind any line of code, right in your terminal. Zero-dependency CLI.">
+<title>linelore · Why is this line like this?</title>
+<meta name="description" content="linelore follows a line of code to its commit, the pull request that merged it, the issues it closed and the review comments around it. One terminal command, no dependencies.">
 <link rel="canonical" href="https://blackman99.github.io/linelore/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
 <link rel="apple-touch-icon" href="logo-512.png">
-<meta name="theme-color" content="#6b4a2b">
+<meta name="theme-color" content="#ffffff">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="linelore">
-<meta property="og:title" content="linelore: git blame tells you who. linelore tells you why.">
-<meta property="og:description" content="The pull request, linked issues and review comments behind any line of code, in one terminal command.">
+<meta property="og:title" content="linelore: Why is this line like this?">
+<meta property="og:description" content="git blame tells you who. linelore follows the line to its commit, pull request, closed issues and review comments, and tells you why.">
 <meta property="og:url" content="https://blackman99.github.io/linelore/">
 <meta property="og:image" content="https://blackman99.github.io/linelore/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="linelore: library catalog cards for one line of code, stamped WHY">
+<meta property="og:image:alt" content="Why is this line like this? A line of code with an orange leader line to 01 commit, 02 pull request, 03 issue, 04 review.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="linelore: git blame tells you who. linelore tells you why.">
-<meta name="twitter:description" content="The PR, linked issues and review comments behind any line of code, in one terminal command.">
+<meta name="twitter:title" content="linelore: Why is this line like this?">
+<meta name="twitter:description" content="git blame tells you who. linelore tells you why: commit, PR, closed issues and review comments for any line.">
 <meta name="twitter:image" content="https://blackman99.github.io/linelore/og-image.png">
-<meta name="twitter:image:alt" content="linelore: library catalog cards for one line of code, stamped WHY">
+<meta name="twitter:image:alt" content="Why is this line like this? A line of code with an orange leader line to 01 commit, 02 pull request, 03 issue, 04 review.">
+<link rel="preload" href="fonts/schibsted-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
+<script>document.documentElement.className='js'+(matchMedia('(prefers-reduced-motion: reduce)').matches?'':' motion')</script>
 </head>
 <body>
-<header class="plate">
-  <img src="favicon.svg" alt="" width="44" height="44">
-  <span class="plate-name">linelore</span>
-  <nav><a href="docs/">Docs</a><a href="docs/blog/">Blog</a><a href="https://github.com/Blackman99/linelore">GitHub</a></nav>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top grid">
+  <a class="mark" href="./" aria-label="linelore home"><span class="mark-t">l:42</span><span class="mark-sq" aria-hidden="true"></span></a>
+  <p class="top-tag">git blame tells you who.<br>linelore tells you why.</p>
+  <nav class="top-nav" aria-label="Main"><a href="docs/">Docs</a><a href="docs/blog/">Blog</a><a href="https://github.com/Blackman99/linelore">GitHub</a></nav>
 </header>
 
-<main>
-<section class="intro">
-  <p class="call">CALL No. 005.1 &middot; BLAME</p>
-  <h1><span>git blame</span> tells you who.<br><em>linelore</em> tells you why.</h1>
-  <p class="lede">Point it at a line. It pulls the catalog cards: the commit, the pull request that merged it, the issues it closed and the review comments left on that spot.</p>
-</section>
+<main id="main">
+<section class="hero grid" id="hero" aria-labelledby="h">
+  <div class="guides" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <h1 id="h" class="headline"><span class="w">Why</span> <span class="w">is</span> <span class="w">this</span> <span class="w">line</span> <span class="w">like</span> <span class="w">this?</span></h1>
 
-<section class="drawer" aria-label="catalog cards for src/requests/adapters.py line 420">
-  <div class="drawer-label"><span>adapters.py : 420</span></div>
-  <div class="cards" id="cards">
-    <article class="card" data-tab="commit" style="--i:0">
-      <span class="tab">commit</span>
-      <p class="t">a62a2d35d9 &middot; 2024-05-22</p>
-      <p class="t">Ian Stapleton Cordasco</p>
-      <p class="t">Allow for overriding of specific pool key params</p>
-    </article>
-    <article class="card" data-tab="PR" style="--i:1">
-      <span class="tab">PR #6716</span>
-      <p class="t">merged 2024-05-24 by @sigmavirus24</p>
-      <p class="t">“Re-enables providing a custom SSLContext via a Transport Adapter, as broken in #6655.”</p>
-      <p class="t xref">see also: psf/requests#6655</p>
-    </article>
-    <article class="card" data-tab="issue" style="--i:2">
-      <span class="tab">fixes #6715</span>
-      <p class="t">SSLV3_ALERT_HANDSHAKE_FAILURE after upgrade 2.31.0 → 2.32.2</p>
-      <p class="t">state: closed</p>
-      <span class="stamp" aria-hidden="true">WHY</span>
-    </article>
+  <div class="subject">
+    <p class="subject-path">psf/requests · src/requests/utils.py<span class="at">:795</span></p>
+    <p class="line"><span class="sr">value_changed = value is not None</span><span class="line-v" id="line" aria-hidden="true"><span class="seg" id="seg">value_changed</span> = value is not None</span></p>
   </div>
-  <p class="caption">Real output from <code>linelore src/requests/adapters.py:420</code> on psf/requests. Tap a tab to pull a card.</p>
+
+  <svg class="leaders" id="leaders" aria-hidden="true"></svg>
+
+  <ol class="answers" aria-label="What linelore found for this line">
+    <li class="ans" data-n="1">
+      <span class="num" aria-hidden="true">01</span>
+      <div><h2>Commit</h2>
+      <p><span class="mono">1d7fd6c8b3</span> · 2017-06-06 · mlcrazy</p>
+      <p class="say">Fixes error swallowing in set_environ</p></div>
+    </li>
+    <li class="ans" data-n="2">
+      <span class="num" aria-hidden="true">02</span>
+      <div><h2>Pull request #4134</h2>
+      <p>Raise exceptions in utils.set_environ · merged 2017-06-09</p>
+      <p class="say">“fixes #4127”</p></div>
+    </li>
+    <li class="ans" data-n="3">
+      <span class="num" aria-hidden="true">03</span>
+      <div><h2>Fixes issue #4127</h2>
+      <p class="say">UnboundLocalError: local variable 'bypass' referenced before assignment</p>
+      <p>closed</p></div>
+    </li>
+    <li class="ans" data-n="4">
+      <span class="num" aria-hidden="true">04</span>
+      <div><h2>Review</h2>
+      <p class="say">@nateprewitt: “what are your thoughts on adding <span class="mono">value_changed = value is not None</span>, and using that single value for both conditionals? The fact these two checks are bound is implicit and has the potential to get out of sync.”</p>
+      <p>@Lukasa: “Works for me!”</p></div>
+    </li>
+  </ol>
+  <p class="why"><span class="why-k">Why</span> <span class="why-t">A reviewer asked for it, so two checks can't drift apart. You only find that out from the review thread, not from blame.</span></p>
 </section>
 
-<section class="howto">
-  <h2>How to read a card</h2>
-  <ol class="ruled">
-    <li><b>Commit.</b> <code>git blame</code> on that one line, ignoring whitespace and anything in <code>.git-blame-ignore-revs</code>.<span class="margin">local, no network</span></li>
-    <li><b>Pull request.</b> The PR that merged the commit, with the first lines of its description: usually where the reason lives.<span class="margin">GitHub API</span></li>
-    <li><b>Issues.</b> Issues the PR closed, plus any other <code>#123</code> it mentions.<span class="margin">cross-references</span></li>
-    <li><b>Review notes.</b> Review comments left near that line, nearest first.<span class="margin">the argument you missed</span></li>
+<section class="sect grid" aria-labelledby="a">
+  <p class="sect-k">A</p>
+  <h2 id="a" class="sect-h">One command</h2>
+  <div class="sect-b">
+    <p class="cmd"><span class="mono" id="install">pipx install git+https://github.com/Blackman99/linelore</span></p>
+    <p class="cmd"><span class="mono">linelore src/requests/utils.py:795</span></p>
+    <button type="button" class="copy" id="copy" data-text="pipx install git+https://github.com/Blackman99/linelore">Copy install command</button>
+    <p class="fine">Python 3.9+ and git, no dependencies. Uses your <span class="mono">gh</span> login or <span class="mono">GH_TOKEN</span>, and works anonymously on public repos. <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
+  </div>
+</section>
+
+<section class="sect grid" aria-labelledby="b">
+  <p class="sect-k">B</p>
+  <h2 id="b" class="sect-h">Four hops</h2>
+  <ol class="hops sect-b">
+    <li class="hop"><span class="hop-n">01</span><h3 class="hop-h">Line → commit</h3><p><span class="mono">git blame --porcelain -w -L 795,795</span>, skipping anything listed in <span class="mono">.git-blame-ignore-revs</span>. Local, no network.</p></li>
+    <li class="hop"><span class="hop-n">02</span><h3 class="hop-h">Commit → pull request</h3><p><span class="mono">GET /repos/{owner}/{repo}/commits/{sha}/pulls</span> finds the PR that merged it, including squash and rebase merges.</p></li>
+    <li class="hop"><span class="hop-n">03</span><h3 class="hop-h">PR → issues</h3><p>GraphQL <span class="mono">closingIssuesReferences</span> lists the issues the PR closed. Any other <span class="mono">#123</span> in the body is listed as a mention.</p></li>
+    <li class="hop"><span class="hop-n">04</span><h3 class="hop-h">PR → review</h3><p><span class="mono">GET /repos/{owner}/{repo}/pulls/{n}/comments</span>, matched to the line's position in that commit. Comments from elsewhere in the file are labelled as such.</p></li>
   </ol>
 </section>
 
-<section class="slip">
-  <h2>Borrow it</h2>
-  <div class="slip-card">
-    <p class="t">pipx install git+https://github.com/Blackman99/linelore</p>
-    <p class="t">cd your-repo &amp;&amp; linelore path/to/file.py:42</p>
-    <button id="copy" type="button">Copy install line</button>
-    <span class="stamp small" id="slipstamp" aria-hidden="true">ISSUED</span>
-  </div>
-  <p class="fine">Python 3.9+, no dependencies. Uses your <code>gh</code> login or <code>GH_TOKEN</code> if present; works anonymously on public repos. <code>--json</code> for scripts and editors, <code>--offline</code> for local-only.</p>
+<section class="sect grid" aria-labelledby="c">
+  <p class="sect-k">C</p>
+  <h2 id="c" class="sect-h">Read more</h2>
+  <ul class="links sect-b">
+    <li><a href="docs/blog/git-blame-says-who-not-why/">git blame tells you who. Here's how to get the why.</a><span>Blog, with the exact API calls and limits</span></li>
+    <li><a href="docs/blog/git-blame-says-who-not-why-zh/">git blame 只告诉你是谁改的，linelore 告诉你为什么</a><span>中文版</span></li>
+    <li><a href="docs/">Documentation</a><span>Install, usage, configuration, reference</span></li>
+    <li><a href="https://github.com/Blackman99/linelore/releases">Releases</a><span>Wheel and sdist on GitHub</span></li>
+  </ul>
 </section>
 </main>
-<footer>MIT &middot; <a href="https://github.com/Blackman99/linelore">Blackman99/linelore</a> &middot; <a href="docs/">documentation</a></footer>
+
+<footer class="foot grid">
+  <p class="foot-l"><span class="mark-t small">l:42</span><span class="mark-sq small" aria-hidden="true"></span></p>
+  <p class="foot-r">MIT · <a href="https://github.com/Blackman99/linelore">Blackman99/linelore</a> · Every example on this page is real linelore output from psf/requests.</p>
+</footer>
 <script src="app.js" defer></script>
 </body>
 </html>

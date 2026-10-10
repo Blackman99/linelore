@@ -8,7 +8,7 @@ copyright: MIT © 2026 Blackman99
 theme:
   name: material
   custom_dir: overrides
-  favicon: assets/logo.svg
+  favicon: assets/favicon.svg
   logo: assets/logo.svg
   font: false
   palette:
@@ -16,7 +16,7 @@ theme:
     primary: custom
     accent: custom
   features: [navigation.instant, navigation.top, content.code.copy, search.highlight, toc.follow]
-extra_css: [stylesheets/catalog.css]
+extra_css: [stylesheets/swiss.css]
 nav:
   - Overview: index.md
   - Install: install.md
