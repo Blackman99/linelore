@@ -31,7 +31,13 @@ def to_text(lore, color=False):
         if pr["mentions"]:
             out.append("  mentions  " + ", ".join(pr["mentions"]))
         for rc in pr["review_comments"]:
-            out.append("  " + c("36", "review") + "  @%s (line %s): %s" % (rc["author"], rc["line"], rc["body"]))
+            if rc.get("near", True):
+                where = "line %s" % rc["line"]
+            elif rc.get("line"):
+                where = "elsewhere in this file, line %s at review time" % rc["line"]
+            else:
+                where = "elsewhere in this file, outdated diff"
+            out.append("  " + c("36", "review") + "  @%s (%s): %s" % (rc["author"], where, rc["body"]))
     for n in lore["notes"]:
         out.append("  note    " + n)
     return "\n".join(out)

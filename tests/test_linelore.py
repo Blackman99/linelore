@@ -47,8 +47,21 @@ def test_issue_refs_and_excerpt():
 def test_comments_for_prefers_nearby():
     cs = [{"path": "a.py", "line": 100, "body": "far"}, {"path": "a.py", "line": 41, "body": "near"},
           {"path": "b.py", "line": 41, "body": "other"}]
-    assert [c["body"] for c in comments_for(cs, "a.py", 40)] == ["near"]
-    assert len(comments_for(cs, "a.py", None)) == 2
+    near, is_near = comments_for(cs, "a.py", 40)
+    assert [c["body"] for c in near] == ["near"] and is_near
+    allc, is_near = comments_for(cs, "a.py", None)
+    assert len(allc) == 2 and not is_near
+
+
+def test_far_review_comments_are_labelled():
+    from linelore.render import to_text
+    lore = {"path": "a.py", "blame": {"sha": "abc1234567", "line": 500, "summary": "s"}, "notes": [],
+            "pulls": [{"number": 1, "title": "t", "author": "u", "merged_at": "2024-01-01", "url": "x", "body": "",
+                       "issues": [], "mentions": [],
+                       "review_comments": [{"author": "r", "line": 66, "body": "hm", "near": False}]}]}
+    assert "elsewhere in this file, line 66 at review time" in to_text(lore)
+    lore["pulls"][0]["review_comments"][0]["line"] = None
+    assert "outdated diff" in to_text(lore)
 
 
 class FakeGH:
@@ -75,7 +88,8 @@ def test_build_lore_full():
 def test_build_lore_no_pr_and_offline():
     b = parse_porcelain(PORC)
     assert "no pull request" in build_lore(b, "o", "r", FakeGH([]), "x")["notes"][0]
-    assert "local commit only" in build_lore(b, "o", "r", None, "x")["notes"][0]
+    assert build_lore(b, "o", "r", None, "x")["notes"][0].startswith("offline:")
+    assert "no GitHub remote" in build_lore(b, None, None, FakeGH([]), "x")["notes"][0]
 
 
 def _git(cwd, *a):
