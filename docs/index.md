@@ -19,6 +19,6 @@ src/requests/adapters.py:420  * If ``verify`` is a string, (i.e., it is a user-s
 
 - Editor-agnostic: one CLI, plus `--json` for editor plugins and scripts.
 - Zero dependencies (Python 3.9+ stdlib). Uses your `gh` login if you have one.
-- Respects `.git-blame-ignore-revs`, ignores whitespace-only changes.
+- Ranges (`file:10-30`), follows renames (`-C -M`), caches API responses. Respects `.git-blame-ignore-revs`.
 
 Next: [Install](install.md) · [Usage](usage.md) · [FAQ](faq.md)

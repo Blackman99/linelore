@@ -1,11 +1,13 @@
 # Command reference
 
 ```
-linelore FILE:LINE [--rev REV] [--repo OWNER/REPO] [--remote NAME]
-                   [--ignore-revs-file PATH] [--json] [--offline]
-                   [--no-color] [--api URL]
+linelore FILE:LINE|FILE:START-END [--rev REV] [--repo OWNER/REPO] [--remote NAME]
+                                  [--ignore-revs-file PATH] [--json] [--offline]
+                                  [--no-color] [--api URL]
 linelore demo [--json]
 ```
+
+`FILE:LINE` blames one line. `FILE:START-END` blames an inclusive range, deduplicates commits, and prints lore per unique commit.
 
 ## Exit codes
 

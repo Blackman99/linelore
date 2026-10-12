@@ -35,7 +35,7 @@ src/requests/adapters.py:420  * If ``verify`` is a string, (i.e., it is a user-s
   mentions  psf/requests#6655
 ```
 
-`--json` for editors/scripts, `--offline` for local only, `--rev` to blame at a tag. Full docs: <https://blackman99.github.io/linelore/docs/>
+`file:10-30` for a range (commits deduped), `--json` for editors/scripts, `--offline` for local only, `--rev` to blame at a tag. Full docs: <https://blackman99.github.io/linelore/docs/>
 
 ## License
 

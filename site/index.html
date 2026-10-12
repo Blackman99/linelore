@@ -86,7 +86,7 @@
     <p class="cmd"><span class="mono" id="install">pipx install git+https://github.com/Blackman99/linelore</span></p>
     <p class="cmd"><span class="mono">linelore src/requests/utils.py:795</span></p>
     <button type="button" class="copy" id="copy" data-text="pipx install git+https://github.com/Blackman99/linelore">Copy install command</button>
-    <p class="fine">Python 3.9+ and git, no dependencies. Uses your <span class="mono">gh</span> login or <span class="mono">GH_TOKEN</span>, and works anonymously on public repos. <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
+    <p class="fine">Python 3.9+ and git, no dependencies. Uses your <span class="mono">gh</span> login or <span class="mono">GH_TOKEN</span>, and works anonymously on public repos. Pass <span class="mono">file:10-30</span> for a range (commits deduped). <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
   </div>
 </section>
 
@@ -94,9 +94,9 @@
   <p class="sect-k">B</p>
   <h2 id="b" class="sect-h">Four hops</h2>
   <ol class="hops sect-b">
-    <li class="hop"><span class="hop-n">01</span><h3 class="hop-h">Line → commit</h3><p><span class="mono">git blame --porcelain -w -L 795,795</span>, skipping anything listed in <span class="mono">.git-blame-ignore-revs</span>. Local, no network.</p></li>
+    <li class="hop"><span class="hop-n">01</span><h3 class="hop-h">Line → commit</h3><p><span class="mono">git blame --porcelain -w -C -M -L …</span> (single line or a range; commits deduped). Skips <span class="mono">.git-blame-ignore-revs</span>. Local, no network.</p></li>
     <li class="hop"><span class="hop-n">02</span><h3 class="hop-h">Commit → pull request</h3><p><span class="mono">GET /repos/{owner}/{repo}/commits/{sha}/pulls</span> finds the PR that merged it, including squash and rebase merges.</p></li>
-    <li class="hop"><span class="hop-n">03</span><h3 class="hop-h">PR → issues</h3><p>GraphQL <span class="mono">closingIssuesReferences</span> lists the issues the PR closed. Any other <span class="mono">#123</span> in the body is listed as a mention.</p></li>
+    <li class="hop"><span class="hop-n">03</span><h3 class="hop-h">PR → issues</h3><p>GraphQL <span class="mono">closingIssuesReferences</span> lists the issues the PR closed. If that is empty, <span class="mono">Fixes</span>/<span class="mono">Closes</span>/<span class="mono">Resolves #N</span> in the title or body are promoted. Any other <span class="mono">#123</span> stays a mention.</p></li>
     <li class="hop"><span class="hop-n">04</span><h3 class="hop-h">PR → review</h3><p><span class="mono">GET /repos/{owner}/{repo}/pulls/{n}/comments</span>, matched to the line's position in that commit. Comments from elsewhere in the file are labelled as such.</p></li>
   </ol>
 </section>

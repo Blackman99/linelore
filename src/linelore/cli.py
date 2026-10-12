@@ -1,12 +1,13 @@
 """linelore: the story behind a line of code."""
 import argparse
 import os
+import re
 import sys
 
 from . import __version__
-from .gitops import GitError, blame_line, origin_repo, repo_root
+from .gitops import GitError, blame_lines, dedupe_blames, origin_repo, repo_root
 from .github import GitHub, GitHubError, find_token
-from .lore import build_lore
+from .lore import build_lore, build_range_lore
 from .render import to_json, to_text
 
 DEMO = {
@@ -27,15 +28,23 @@ DEMO = {
 
 
 def parse_target(s):
-    path, sep, line = s.rpartition(":")
-    if not sep or not line.isdigit():
-        raise argparse.ArgumentTypeError("expected FILE:LINE, e.g. src/app.py:42")
-    return path, int(line)
+    """Parse FILE:LINE or FILE:START-END. Returns (path, start, end)."""
+    path, sep, rest = s.rpartition(":")
+    if not sep or not rest:
+        raise argparse.ArgumentTypeError("expected FILE:LINE or FILE:START-END, e.g. src/app.py:42 or src/app.py:10-30")
+    m = re.fullmatch(r"(\d+)(?:-(\d+))?", rest)
+    if not m:
+        raise argparse.ArgumentTypeError("expected FILE:LINE or FILE:START-END, e.g. src/app.py:42 or src/app.py:10-30")
+    start = int(m.group(1))
+    end = int(m.group(2)) if m.group(2) is not None else start
+    if start < 1 or end < start:
+        raise argparse.ArgumentTypeError("invalid line range %s" % rest)
+    return path, start, end
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="linelore", description="Show the pull request, linked issues and review comments behind a line of code.")
-    ap.add_argument("target", nargs="?", help="FILE:LINE (or 'demo')")
+    ap.add_argument("target", nargs="?", help="FILE:LINE or FILE:START-END (or 'demo')")
     ap.add_argument("--rev", help="blame at this revision (default: working tree)")
     ap.add_argument("--repo", help="OWNER/REPO on GitHub (default: from the origin remote)")
     ap.add_argument("--remote", default="origin", help="git remote to read the GitHub repo from")
@@ -54,7 +63,7 @@ def main(argv=None):
         print(to_json(DEMO) if a.json else to_text(DEMO, color))
         return 0
     try:
-        path, line = parse_target(a.target)
+        path, start, end = parse_target(a.target)
     except argparse.ArgumentTypeError as e:
         ap.error(str(e))
     cwd = os.path.dirname(os.path.abspath(path)) or "."
@@ -66,7 +75,7 @@ def main(argv=None):
         irf = a.ignore_revs_file
         if irf is None and os.path.exists(os.path.join(root, ".git-blame-ignore-revs")):
             irf = os.path.join(root, ".git-blame-ignore-revs")
-        blame = blame_line(rel, line, a.rev, cwd=root, ignore_revs_file=irf)
+        blames = blame_lines(rel, start, end, a.rev, cwd=root, ignore_revs_file=irf)
     except GitError as e:
         print("linelore: " + str(e), file=sys.stderr)
         return 1
@@ -79,10 +88,18 @@ def main(argv=None):
             _, owner, repo = r
     gh = None if a.offline else GitHub(find_token(), api=a.api)
     try:
-        lore = build_lore(blame, owner, repo, gh, rel)
+        if start == end:
+            lore = build_lore(blames[0], owner, repo, gh, rel)
+        else:
+            groups = dedupe_blames(blames)
+            lore = build_range_lore(groups, owner, repo, gh, rel, start, end)
     except GitHubError as e:
         print("linelore: " + str(e), file=sys.stderr)
-        lore = build_lore(blame, owner, repo, None, rel)
+        if start == end:
+            lore = build_lore(blames[0], owner, repo, None, rel)
+        else:
+            groups = dedupe_blames(blames)
+            lore = build_range_lore(groups, owner, repo, None, rel, start, end)
         lore["notes"].append("GitHub lookup failed: %s" % e)
         print(to_json(lore) if a.json else to_text(lore, color))
         return 3

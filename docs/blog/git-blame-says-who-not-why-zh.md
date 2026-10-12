@@ -168,8 +168,8 @@ JSON 结构目前还没冻结，v1.0 时会稳定下来。
 
 在真实仓库上试用后，坦白说有这些局限：
 
-- **一次只查一行。** 行范围（`file:10-30`，重复 commit 去重）是下一步。
-- **移动和重命名。** blame 会停在搬动代码的那个 commit。跟踪 `-C -M` 计划在 v0.2 做。
+- **行范围。** `file:10-30` 会 blame 一段、按 commit 去重，并用 `-C -M` 跟随移动/重命名。v0.2 已加入。
+- **移动和重命名。** blame 使用 `-C -M`，lore 会跟随重命名和拷贝（v0.2）。
 - **大 PR 被 squash 合并。** PR 能找对，但描述里可能写了二十件事，你关心的那行只是其中之一。
 - **`closingIssuesReferences` 不一定有数据。** 比如 `requests/adapters.py:258 --rev v2.31.0`，对应 2017 年的 PR #4371，描述里写了 "Resolves #4369"，GitHub 却没返回关闭关系。linelore 仍会把 #4369 列在 mentions 里。
 - **review 评论按行距匹配。** 这是启发式的。force-push 之后的评论坐标可能对不上，过时（outdated）的评论没有行号。这些评论会标为 `elsewhere in this file`，不会直接丢掉。每个 PR 只读前 100 条 review 评论。
@@ -178,7 +178,7 @@ JSON 结构目前还没冻结，v1.0 时会稳定下来。
 
 ## 路线图
 
-- **v0.2**：行范围、跟踪移动/重命名、按 sha 缓存 API 响应。
+- **v0.2（已完成）**：行范围、跟踪移动/重命名、按 sha 缓存 API 响应。
 - **v0.3**：GitLab 与 Gitea/Forgejo 后端；`--open` 直接在浏览器打开 PR。
 - **v0.4**：基于 `--json` 的编辑器片段（Neovim、VS Code task、Helix、Emacs）；可选的 `--summarize`，把收集到的事实交给你自己指定的 LLM 命令，并明确标注是生成内容。
 - **v1.0**：稳定的 JSON 结构，发布到 PyPI 和 Homebrew。
