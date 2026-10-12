@@ -168,8 +168,8 @@ The schema isn't frozen yet. It becomes stable at v1.0.
 
 Some honest limits from trying it on real repositories:
 
-- **One line at a time.** Ranges (`file:10-30`, with repeated commits deduplicated) are next on the roadmap.
-- **Moves and renames.** Blame stops at the commit that moved the code. `-C -M` following is planned for v0.2.
+- **Ranges.** `file:10-30` blames a range, deduplicates commits, and follows moves/renames (`-C -M`). Added in v0.2.
+- **Moves and renames.** Blame runs with `-C -M` so lore follows code across renames and copies (v0.2).
 - **Squash merges of big PRs.** The PR is found correctly, but its body may describe twenty changes, and the line you care about is one of them.
 - **`closingIssuesReferences` isn't always populated.** On `requests/adapters.py:258 --rev v2.31.0`, PR #4371 (2017) says "Resolves #4369", but GitHub returns no closing references for it. linelore still shows #4369 under mentions.
 - **Review comments are matched by line distance.** That's a heuristic. Comments on a later force-pushed revision can sit at different coordinates, and outdated comments have no line at all. Those are labelled `elsewhere in this file` rather than dropped. Only the first 100 review comments of a PR are read.
@@ -178,7 +178,7 @@ Some honest limits from trying it on real repositories:
 
 ## Roadmap
 
-- **v0.2**: line ranges, follow moves/renames, cache API responses per sha.
+- **v0.2 (done)**: line ranges, follow moves/renames, cache API responses per sha.
 - **v0.3**: GitLab and Gitea/Forgejo backends; `--open` to launch the PR in a browser.
 - **v0.4**: editor snippets (Neovim, VS Code task, Helix, Emacs) on top of `--json`, and an optional, clearly labelled `--summarize` that pipes the collected facts to an LLM command you supply.
 - **v1.0**: stable JSON schema, PyPI and Homebrew.

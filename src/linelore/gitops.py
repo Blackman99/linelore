@@ -15,33 +15,99 @@ def run_git(args, cwd=None):
 
 
 def parse_porcelain(text):
-    """Parse `git blame --porcelain` output for a single line."""
+    """Parse `git blame --porcelain` for one or more lines.
+
+    Returns a list of per-line blame dicts. Consecutive lines that share a
+    commit reuse the commit metadata from the first header for that sha
+    (porcelain omits author/summary on later occurrences).
+    """
     lines = text.splitlines()
     if not lines:
         raise GitError("empty blame output")
-    head = lines[0].split()
-    info = {"sha": head[0], "orig_line": int(head[1]), "line": int(head[2])}
-    for ln in lines[1:]:
-        if ln.startswith("\t"):
-            info["content"] = ln[1:]
-            break
-        key, _, val = ln.partition(" ")
-        if key in ("author", "author-mail", "author-time", "author-tz", "summary", "filename", "previous"):
-            info[key.replace("-", "_")] = val
-    if "author_time" in info:
-        info["author_time"] = int(info["author_time"])
-    info["uncommitted"] = set(info["sha"]) == {"0"}
-    return info
+    by_sha = {}
+    out = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        head = lines[i].split()
+        if len(head) < 3 or not re.fullmatch(r"[0-9a-f]{4,40}", head[0]):
+            raise GitError("unexpected blame header: %s" % lines[i][:80])
+        sha, orig_line, final_line = head[0], int(head[1]), int(head[2])
+        i += 1
+        meta = {}
+        content = None
+        while i < n:
+            ln = lines[i]
+            if ln.startswith("\t"):
+                content = ln[1:]
+                i += 1
+                break
+            if re.match(r"^[0-9a-f]{4,40} ", ln):
+                break  # next header without a content line (shouldn't happen)
+            key, _, val = ln.partition(" ")
+            if key in ("author", "author-mail", "author-time", "author-tz",
+                       "summary", "filename", "previous"):
+                meta[key.replace("-", "_")] = val
+            i += 1
+        if sha in by_sha:
+            info = dict(by_sha[sha])
+            info.update(meta)  # keep any newly seen fields; preserve author etc.
+        else:
+            info = dict(meta)
+            by_sha[sha] = info
+        entry = dict(by_sha[sha])
+        entry["sha"] = sha
+        entry["orig_line"] = orig_line
+        entry["line"] = final_line
+        if "author_time" in entry and not isinstance(entry["author_time"], int):
+            entry["author_time"] = int(entry["author_time"])
+        entry["content"] = content if content is not None else ""
+        entry["uncommitted"] = set(sha) == {"0"}
+        # refresh stored metadata (first sighting wins for author/summary)
+        for k, v in meta.items():
+            by_sha[sha].setdefault(k, v)
+        if "author_time" in by_sha[sha] and not isinstance(by_sha[sha]["author_time"], int):
+            by_sha[sha]["author_time"] = int(by_sha[sha]["author_time"])
+        out.append(entry)
+    if not out:
+        raise GitError("empty blame output")
+    return out
 
 
-def blame_line(path, line, rev=None, cwd=None, ignore_revs_file=None):
-    args = ["blame", "--porcelain", "-w", "-L", "%d,%d" % (line, line)]
+def blame_lines(path, start, end, rev=None, cwd=None, ignore_revs_file=None):
+    """Blame lines start..end (inclusive). Follows moves/copies via -C -M."""
+    if start < 1 or end < start:
+        raise GitError("invalid line range %s-%s" % (start, end))
+    args = ["blame", "--porcelain", "-w", "-C", "-M", "-L", "%d,%d" % (start, end)]
     if ignore_revs_file:
         args += ["--ignore-revs-file", ignore_revs_file]
     if rev:
         args.append(rev)
     args += ["--", path]
     return parse_porcelain(run_git(args, cwd=cwd))
+
+
+def blame_line(path, line, rev=None, cwd=None, ignore_revs_file=None):
+    """Blame a single line; returns one dict (compat with v0.1)."""
+    return blame_lines(path, line, line, rev=rev, cwd=cwd,
+                       ignore_revs_file=ignore_revs_file)[0]
+
+
+def dedupe_blames(blames):
+    """Group per-line blames by commit sha, preserving first-appearance order.
+
+    Returns a list of dicts: {blame, lines} where blame is the first line's
+    metadata for that sha and lines is the sorted list of final line numbers.
+    """
+    order = []
+    groups = {}
+    for b in blames:
+        sha = b["sha"]
+        if sha not in groups:
+            groups[sha] = {"blame": b, "lines": []}
+            order.append(sha)
+        groups[sha]["lines"].append(b["line"])
+    return [groups[sha] for sha in order]
 
 
 _REMOTE_RES = [
