@@ -498,7 +498,8 @@ def test_gitea_no_pr_expires_and_unpushed_commit_is_not_cached(tmp_path):
 
 def test_empty_ttl_setting(tmp_path, monkeypatch):
     assert empty_ttl() == EMPTY_TTL == 3600
-    for raw, want in (("600", 600), ("0", 0), ("-5", 0), ("soon", EMPTY_TTL), ("", EMPTY_TTL)):
+    for raw, want in (("600", 600), ("0", 0), ("2.5", 2.5), ("-5", EMPTY_TTL), ("soon", EMPTY_TTL), ("", EMPTY_TTL),
+                      ("nan", EMPTY_TTL), ("inf", EMPTY_TTL), ("-inf", EMPTY_TTL)):
         monkeypatch.setenv("LINELORE_CACHE_EMPTY_TTL", raw)
         assert empty_ttl() == want
     # 0: empty answers never reach the disk; real ones still do
@@ -508,6 +509,26 @@ def test_empty_ttl_setting(tmp_path, monkeypatch):
     assert not list(tmp_path.rglob("*.json"))
     gh.get("/repos/o/r/pulls/41/comments?per_page=100")
     assert len(list(tmp_path.rglob("*.json"))) == 1
+
+
+def test_cached_age_note_survives_a_memory_hit(tmp_path):
+    GitHub("t", opener=Router({GH_PULLS: (200, [])}), cache_dir=str(tmp_path)).commit_pulls("o", "r", "e" * 40)
+    r = Router({})
+    gh = GitHub("t", opener=r, cache_dir=str(tmp_path))
+    gh.clock = later(10 * 60 + 30)
+    first = build_lore(blame("e" * 40, 3), "o", "r", gh, "app.py")  # from disk
+    gh.clock = later(12 * 60 + 30)
+    second = build_lore(blame("e" * 40, 9), "o", "r", gh, "app.py")  # same answer, now from memory
+    assert r.calls == []
+    assert first["notes"][0].endswith("cached 10 min ago (LINELORE_CACHE_EMPTY_TTL=0 to re-check)")
+    assert second["notes"][0].endswith("cached 12 min ago (LINELORE_CACHE_EMPTY_TTL=0 to re-check)")
+    # an empty answer fetched in this process is fresh: no "cached" in the note
+    r = Router({GH_PULLS.replace("e" * 40, "9" * 40): (200, [])})
+    gh = GitHub("t", opener=r, cache_dir=str(tmp_path))
+    for _ in range(2):
+        lore = build_lore(blame("9" * 40, 3), "o", "r", gh, "app.py")
+        assert lore["notes"] == ["no pull request found for this commit (pushed directly?)"]
+    assert len(r.calls) == 1
 
 
 def test_empty_answer_from_the_future_is_stale(tmp_path):

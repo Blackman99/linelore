@@ -21,6 +21,7 @@ disk for empty_ttl() seconds, because they are the ones that change.
 """
 import hashlib
 import json
+import math
 import os
 import re
 import time
@@ -98,15 +99,15 @@ def empty_ttl():
     """Seconds an empty answer ("no PR for this commit") stays valid on disk.
 
     LINELORE_CACHE_EMPTY_TTL overrides the one-hour default; 0 keeps empty
-    answers out of the disk cache entirely. Anything unparsable means the default.
+    answers out of the disk cache entirely. Anything that isn't a finite number
+    of seconds >= 0 (empty, "soon", -5, nan, inf) means the default.
     """
     raw = os.environ.get("LINELORE_CACHE_EMPTY_TTL")
-    if raw is None or not raw.strip():
-        return EMPTY_TTL
     try:
-        return max(0.0, float(raw))
-    except ValueError:
+        ttl = float(raw)
+    except (TypeError, ValueError):
         return EMPTY_TTL
+    return ttl if math.isfinite(ttl) and ttl >= 0 else EMPTY_TTL
 
 
 def is_empty_answer(value):
@@ -275,6 +276,7 @@ class Forge:
         self._mem = {}
         self.empty_ttl = empty_ttl()
         self._empty_age = None  # oldest empty answer served from disk; see pop_cached_empty_age
+        self._empty_born = {}  # cache key -> mtime, for empty answers that came from disk
         self._notices = []
         self._answered = False  # the server has sent at least one HTTP response
         # cache_dir=False means caller forced off; None means resolve from env
@@ -318,7 +320,14 @@ class Forge:
         return os.path.join(self.cache_dir, key[:2], key + ".json")
 
     def _mem_get(self, key):
-        return self._mem.get(key)
+        hit = self._mem.get(key)
+        born = self._empty_born.get(key)
+        if hit is not None and born is not None:
+            self._saw_cached_empty(self.clock() - born)  # still the cached answer: report its age
+        return hit
+
+    def _saw_cached_empty(self, age):
+        self._empty_age = max(age, self._empty_age or 0, 0)
 
     def _disk_get(self, key):
         path = self._disk_path(key)
@@ -327,20 +336,23 @@ class Forge:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 value = json.load(f)
-            age = self.clock() - os.path.getmtime(path)
+            born = os.path.getmtime(path)
         except (OSError, json.JSONDecodeError):
             return None
+        age = self.clock() - born
         if is_empty_answer(value):
             # "nothing yet" goes stale: the PR gets opened, reviews come in. An mtime
             # well in the future (the clock moved back) counts as stale too; a few
             # seconds of skew (coarse clocks, network file systems) does not.
             if age < -60 or age >= self.empty_ttl:
                 return None
-            self._empty_age = max(age, self._empty_age or 0, 0)
+            self._empty_born[key] = born
+            self._saw_cached_empty(age)
         return value
 
     def _store(self, key, value):
         self._mem[key] = value
+        self._empty_born.pop(key, None)  # a fresh answer, not one from the cache
         path = self._disk_path(key)
         if not path or (is_empty_answer(value) and self.empty_ttl <= 0):
             return
