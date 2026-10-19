@@ -34,7 +34,7 @@ def to_json(lore):
 
 
 def _status(pr):
-    """"merged 2024-05-24", "open", "closed without merging"."""
+    """"merged 2024-05-24", "still open" or "closed without merging"."""
     if pr.get("merged_at"):
         return "merged %s" % _date(pr["merged_at"])
     if pr.get("state") == "open":
