@@ -52,13 +52,16 @@ class Router:
                     break
         if hit is None:
             hit = (404, {"message": "404 Not Found (no fixture for %s)" % url})
-        status, payload = hit
+        status, payload, headers = (hit + ({},))[:3]  # optional third item: response headers
         body = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
         if status >= 400:
             hdrs = {"RateLimit-Remaining": "0"} if status == 429 else {}
             raise urllib.error.HTTPError(url, status, "err", hdrs, io.BytesIO(body))
 
         class Resp:
+            def __init__(self_inner):
+                self_inner.headers = headers
+
             def read(self_inner):
                 return body
 
@@ -215,7 +218,7 @@ def gitea_routes(**extra):
     routes = {
         CB + "/commits/%s/pull" % GT_SHA: (200, fixture("gitea_commit_pull.json")),
         CB + "/issues/2462": (200, fixture("gitea_issue.json")),
-        CB + "/pulls/2463/reviews?limit=50": (200, fixture("gitea_reviews.json")),
+        CB + "/pulls/2463/reviews?limit=50&page=1": (200, fixture("gitea_reviews.json"), {"X-Total-Count": "1"}),
         CB + "/pulls/2463/reviews/1759028/comments": (200, fixture("gitea_review_comments.json")),
     }
     routes.update(extra)
@@ -285,6 +288,103 @@ def test_gitea_no_pr_answer_is_cached(tmp_path):
     r2 = Router(routes)
     assert Gitea(None, api="https://codeberg.org/api/v1", opener=r2, cache_dir=str(tmp_path)).commit_pulls("dnkl", "foot", sha) == []
     assert len(r.calls) == 3 and r2.calls == []
+
+
+# ------------------------------------------- Gitea review paging (issue #4)
+
+REVIEWS = CB + "/pulls/2463/reviews?limit=50&page=%d"
+
+
+def fake_reviews(n, with_comments=()):
+    return [{"id": 9000 + i, "comments_count": 1 if i in with_comments else 0} for i in range(n)]
+
+
+def comment_route(i, path="grid.c", line=930):
+    return (CB + "/pulls/2463/reviews/%d/comments" % (9000 + i),
+            (200, [{"path": path, "position": line, "body": "review %d" % i, "user": {"login": "r%d" % i},
+                    "html_url": "https://codeberg.org/dnkl/foot/pulls/2463#c%d" % i}]))
+
+
+def paged(reviews, pages, headers=lambda page, last: {}):
+    routes = {}
+    for page in range(1, pages + 1):
+        chunk = reviews[(page - 1) * 50: page * 50]
+        routes[REVIEWS % page] = (200, chunk, headers(page, pages))
+    return routes
+
+
+def test_gitea_reviews_page_by_total_count(tmp_path):
+    reviews = fake_reviews(120, with_comments={3, 77, 119})  # the line's comment lives on page 3
+    routes = paged(reviews, 3, lambda page, last: {"X-Total-Count": "120"})
+    routes.update(dict(comment_route(i) for i in (3, 77, 119)))
+    r = Router(routes)
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path))
+    comments = gt.pull_review_comments("dnkl", "foot", 2463)
+    assert [c["body"] for c in comments] == ["review 3", "review 77", "review 119"]
+    assert [u for u in r.calls if "/reviews?" in u] == [REVIEWS % 1, REVIEWS % 2, REVIEWS % 3]  # no 4th probe
+    assert gt.pop_notices() == []
+    # the whole list is one cache entry: a second run reads no review pages at all
+    r2 = Router({})
+    assert len(Gitea(None, api="https://codeberg.org/api/v1", opener=r2, cache_dir=str(tmp_path))
+               .pull_review_comments("dnkl", "foot", 2463)) == 3
+    assert r2.calls == []
+
+
+def test_gitea_reviews_page_by_link_and_without_headers():
+    reviews = fake_reviews(70, with_comments={69})
+    nxt = '<https://internal:3000/api/v1/repos/dnkl/foot/pulls/2463/reviews?limit=50&page=2>; rel="next"'
+    routes = paged(reviews, 2, lambda page, last: {"Link": nxt} if page < last else {"Link": '<x>; rel="first"'})
+    routes.update([comment_route(69)])
+    r = Router(routes)
+    assert [c["body"] for c in Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False)
+            .pull_review_comments("dnkl", "foot", 2463)] == ["review 69"]
+    # page URLs are ours, never the Link target (a wrong ROOT_URL must not get the token)
+    assert all(u.startswith(CB) for u in r.calls) and len([u for u in r.calls if "/reviews?" in u]) == 2
+    # no paging headers at all: keep reading until a page comes back empty
+    routes = paged(reviews, 2)
+    routes[REVIEWS % 3] = (200, [])
+    routes.update([comment_route(69)])
+    r = Router(routes)
+    assert len(Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False)
+               .pull_review_comments("dnkl", "foot", 2463)) == 1
+    assert [u for u in r.calls if "/reviews?" in u] == [REVIEWS % 1, REVIEWS % 2, REVIEWS % 3]
+
+
+def test_gitea_server_ignoring_page_param_does_not_loop():
+    r = Router({CB + "/pulls/2463/reviews?*": (200, fake_reviews(50))})
+    Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False).pull_review_comments("dnkl", "foot", 2463)
+    assert len(r.calls) == 2  # page 2 repeated page 1: stop
+
+
+def test_gitea_review_page_cap_is_a_note(tmp_path):
+    reviews = fake_reviews(812, with_comments={10})
+    routes = gitea_routes()
+    routes.update(paged(reviews, 17, lambda page, last: {"X-Total-Count": "812"}))
+    routes.update([comment_route(10)])
+    r = Router(routes)
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path))
+    lore = build_lore(blame(GT_SHA, 930, filename="grid.c"), "dnkl", "foot", gt, "grid.c")
+    assert len([u for u in r.calls if "/reviews?" in u]) == 10
+    assert lore["pulls"][0]["review_comments"][0]["body"] == "review 10"
+    note = "PR #2463 has 812 reviews; only the first 500 were read for review comments"
+    assert lore["notes"] == [note]
+    assert note in to_text(lore)
+    # the note survives a cache hit
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=Router({}), cache_dir=str(tmp_path))
+    assert build_lore(blame(GT_SHA, 930, filename="grid.c"), "dnkl", "foot", gt, "grid.c")["notes"] == [note]
+
+
+def test_gitea_review_thread_cap_reads_the_newest():
+    reviews = fake_reviews(60)
+    for rv in reviews:
+        rv["comments_count"] = 2
+    routes = paged(reviews, 2, lambda page, last: {"X-Total-Count": "60"})
+    routes.update(dict(comment_route(i) for i in range(60)))
+    r = Router(routes)
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False)
+    comments = gt.pull_review_comments("dnkl", "foot", 2463)
+    assert [c["body"] for c in comments][:1] == ["review 10"] and len(comments) == 50
+    assert gt.pop_notices() == ["PR #2463 has 60 reviews with inline comments; only the newest 50 were read"]
 
 
 # --------------------------------------------------------- errors and cache

@@ -46,7 +46,9 @@ The output and the `--json` shape are the same on every forge; `forge` tells you
 !!! note "gitlab.com and review comments"
     gitlab.com only shows MR discussions to signed-in users. Without `GITLAB_TOKEN` you still get the commit, the MR and the issues it closes, and a note says review comments were skipped. A personal access token with `read_api` is enough.
 
-**Gitea / Forgejo.** Commit → PR (`/repos/{o}/{r}/commits/{sha}/pull`) → `Fixes`/`Closes`/`Resolves` references in the PR (Gitea has no "closes" API, so each referenced issue is looked up for its real title and state) → review comments (`/pulls/{n}/reviews/{id}/comments`).
+**Gitea / Forgejo.** Commit → PR (`/repos/{o}/{r}/commits/{sha}/pull`) → `Fixes`/`Closes`/`Resolves` references in the PR (Gitea has no "closes" API, so each referenced issue is looked up for its real title and state) → review comments (`/pulls/{n}/reviews`, then `/reviews/{id}/comments` for each review that has inline comments).
+
+Reviews are read page by page (50 a page, following `X-Total-Count` or `Link`), so a long-running PR doesn't lose its later reviews. Two limits keep a huge PR from turning into hundreds of requests: up to 500 reviews (10 pages), and the inline comments of the newest 50 reviews that have any. When a PR goes past either one, a note says so, for example `note    PR #4521 has 812 reviews; only the first 500 were read for review comments`.
 
 Gitea only links a PR to its *merge* commit. When the blamed commit came in through a merge commit, linelore finds that merge locally (`git rev-list --first-parent --ancestry-path`) and asks again, so old branch-merged PRs are found too. It never attributes a commit pushed straight to the main branch to a later merge.
 
