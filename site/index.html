@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>linelore · Why is this line like this?</title>
-<meta name="description" content="linelore follows a line of code to its commit, the pull request that merged it, the issues it closed and the review comments around it. One terminal command, no dependencies.">
+<meta name="description" content="linelore follows a line of code to its commit, the pull request that merged it, the issues it closed and the review comments around it. GitHub, GitLab and Gitea/Forgejo. One terminal command, no dependencies.">
 <link rel="canonical" href="https://blackman99.github.io/linelore/">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
@@ -85,8 +85,9 @@
   <div class="sect-b">
     <p class="cmd"><span class="mono" id="install">pipx install git+https://github.com/Blackman99/linelore</span></p>
     <p class="cmd"><span class="mono">linelore src/requests/utils.py:795</span></p>
+    <p class="cmd"><span class="mono">linelore src/requests/utils.py:795 --open</span></p>
     <button type="button" class="copy" id="copy" data-text="pipx install git+https://github.com/Blackman99/linelore">Copy install command</button>
-    <p class="fine">Python 3.9+ and git, no dependencies. Uses your <span class="mono">gh</span> login or <span class="mono">GH_TOKEN</span>, and works anonymously on public repos. Pass <span class="mono">file:10-30</span> for a range (commits deduped). <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
+    <p class="fine">Python 3.9+ and git, no dependencies. Works on <b>GitHub, GitLab and Gitea/Forgejo</b> (Codeberg too), hosted or self-hosted, and reads which one from your remote. Works anonymously on public repos; tokens are optional (<span class="mono">GH_TOKEN</span>, <span class="mono">GITLAB_TOKEN</span>, <span class="mono">GITEA_TOKEN</span>). Pass <span class="mono">file:10-30</span> for a range (commits deduped), <span class="mono">--open</span> to open the PR or MR in your browser, <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
   </div>
 </section>
 
@@ -95,9 +96,9 @@
   <h2 id="b" class="sect-h">Four hops</h2>
   <ol class="hops sect-b">
     <li class="hop"><span class="hop-n">01</span><h3 class="hop-h">Line → commit</h3><p><span class="mono">git blame --porcelain -w -C -M -L …</span> (single line or a range; commits deduped). Skips <span class="mono">.git-blame-ignore-revs</span>. Local, no network.</p></li>
-    <li class="hop"><span class="hop-n">02</span><h3 class="hop-h">Commit → pull request</h3><p><span class="mono">GET /repos/{owner}/{repo}/commits/{sha}/pulls</span> finds the PR that merged it, including squash and rebase merges.</p></li>
-    <li class="hop"><span class="hop-n">03</span><h3 class="hop-h">PR → issues</h3><p>GraphQL <span class="mono">closingIssuesReferences</span> lists the issues the PR closed. If that is empty, <span class="mono">Fixes</span>/<span class="mono">Closes</span>/<span class="mono">Resolves #N</span> in the title or body are promoted. Any other <span class="mono">#123</span> stays a mention.</p></li>
-    <li class="hop"><span class="hop-n">04</span><h3 class="hop-h">PR → review</h3><p><span class="mono">GET /repos/{owner}/{repo}/pulls/{n}/comments</span>, matched to the line's position in that commit. Comments from elsewhere in the file are labelled as such.</p></li>
+    <li class="hop"><span class="hop-n">02</span><h3 class="hop-h">Commit → pull request</h3><p>Asks the forge that hosts the repo which PR (or GitLab MR) merged it, including squash and rebase merges.</p><p class="forge-calls"><b>GitHub</b><span><span class="mono">/<wbr>repos/<wbr>{o}/<wbr>{r}/<wbr>commits/<wbr>{sha}/<wbr>pulls</span></span><b>GitLab</b><span><span class="mono">/<wbr>projects/<wbr>:id/<wbr>repository/<wbr>commits/<wbr>:sha/<wbr>merge_requests</span></span><b>Gitea, Forgejo</b><span><span class="mono">/<wbr>repos/<wbr>{o}/<wbr>{r}/<wbr>commits/<wbr>{sha}/<wbr>pull</span>, retried with the merge commit found locally</span></p></li>
+    <li class="hop"><span class="hop-n">03</span><h3 class="hop-h">PR → issues</h3><p>GitHub GraphQL <span class="mono">closingIssuesReferences</span>, GitLab <span class="mono">closes_issues</span>, or on Gitea the <span class="mono">Fixes</span>/<span class="mono">Closes</span>/<span class="mono">Resolves #N</span> references, each looked up for its title and state. If the forge has nothing, those references in the title or body are promoted. Any other <span class="mono">#123</span> stays a mention.</p></li>
+    <li class="hop"><span class="hop-n">04</span><h3 class="hop-h">PR → review</h3><p>Review comments (GitLab diff notes, with their replies), matched to the line's position in that commit. Comments from elsewhere in the file are labelled as such.</p></li>
   </ol>
 </section>
 
@@ -107,6 +108,7 @@
   <ul class="links sect-b">
     <li><a href="docs/blog/git-blame-says-who-not-why/">git blame tells you who. Here's how to get the why.</a><span>Blog, with the exact API calls and limits</span></li>
     <li><a href="docs/blog/git-blame-says-who-not-why-zh/">git blame 只告诉你是谁改的，linelore 告诉你为什么</a><span>中文版</span></li>
+    <li><a href="docs/forges/">GitHub, GitLab, Gitea/Forgejo</a><span>Detection, tokens, self-hosted, per-forge limits</span></li>
     <li><a href="docs/">Documentation</a><span>Install, usage, configuration, reference</span></li>
     <li><a href="https://github.com/Blackman99/linelore/releases">Releases</a><span>Wheel and sdist on GitHub</span></li>
   </ul>

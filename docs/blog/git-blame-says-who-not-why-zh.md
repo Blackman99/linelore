@@ -173,13 +173,13 @@ JSON 结构目前还没冻结，v1.0 时会稳定下来。
 - **大 PR 被 squash 合并。** PR 能找对，但描述里可能写了二十件事，你关心的那行只是其中之一。
 - **`closingIssuesReferences` 不一定有数据。** 比如 `requests/adapters.py:258 --rev v2.31.0`，对应 2017 年的 PR #4371，描述里写了 "Resolves #4369"，GitHub 却没返回关闭关系。linelore 仍会把 #4369 列在 mentions 里。
 - **review 评论按行距匹配。** 这是启发式的。force-push 之后的评论坐标可能对不上，过时（outdated）的评论没有行号。这些评论会标为 `elsewhere in this file`，不会直接丢掉。每个 PR 只读前 100 条 review 评论。
-- **目前只支持 GitHub 和 GitHub Enterprise**（`--api https://ghe.example.com/api/v3`）。GitLab、Gitea/Forgejo 计划在 v0.3。
+- **代码托管平台。** 本文以 GitHub 为例。从 v0.3 起也支持 GitLab（合并请求、`closes_issues`、diff 评论）和 Gitea/Forgejo（包括 Codeberg），详见 [Forges](../forges.md)。在 gitlab.com 上读取评审评论需要设置 `GITLAB_TOKEN`。
 - **没写下来的原因，它找不回来。** PR 描述为空、也没人 review 的话，linelore 也会如实告诉你。
 
 ## 路线图
 
 - **v0.2（已完成）**：行范围、跟踪移动/重命名、按 sha 缓存 API 响应。
-- **v0.3**：GitLab 与 Gitea/Forgejo 后端；`--open` 直接在浏览器打开 PR。
+- **v0.3（已完成）**：GitLab 与 Gitea/Forgejo 后端；`--open` 直接在浏览器打开 PR。
 - **v0.4**：基于 `--json` 的编辑器片段（Neovim、VS Code task、Helix、Emacs）；可选的 `--summarize`，把收集到的事实交给你自己指定的 LLM 命令，并明确标注是生成内容。
 - **v1.0**：稳定的 JSON 结构，发布到 PyPI 和 Homebrew。
 

@@ -10,6 +10,10 @@
 
 **Where does it cache API responses?** In memory for the process, and on disk under `~/.cache/linelore` (override or disable with `LINELORE_CACHE`).
 
-**GitLab / Gitea?** Not yet; see the [roadmap](https://github.com/Blackman99/linelore/blob/main/ROADMAP.md).
+**GitLab / Gitea / Forgejo / Codeberg?** Yes, since 0.3. The forge is read from your remote; see [Forges](forges.md) for self-hosted instances and tokens.
 
-**Does it send my code anywhere?** No. It sends the commit sha and repo name to the GitHub API, nothing else.
+**Why are there no review comments on my gitlab.com repo?** gitlab.com only shows merge request discussions to signed-in users. Set `GITLAB_TOKEN` (a token with `read_api` is enough); without it linelore still shows the MR and the issues it closed, and says so in a note.
+
+**A Gitea/Forgejo PR merged with a merge commit isn't found.** linelore looks up the merge commit locally, so make sure the branch you blame contains the merge (`git fetch`), and that the clone isn't shallow.
+
+**Does it send my code anywhere?** No. It sends the commit sha and repo name to your forge's API (GitHub, GitLab or Gitea), nothing else. Tokens only go to the forge they belong to.

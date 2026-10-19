@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linelore"
-version = "0.2.0"
-description = "git blame tells you who. linelore tells you why: the PR, linked issues and review comments behind any line."
+version = "0.3.0"
+description = "git blame tells you who. linelore tells you why: the PR or MR, linked issues and review comments behind any line, on GitHub, GitLab and Gitea/Forgejo."
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 dependencies = []
-keywords = ["git", "blame", "github", "pull-request", "code-archaeology", "cli"]
+keywords = ["git", "blame", "github", "gitlab", "gitea", "forgejo", "codeberg", "pull-request", "merge-request", "code-archaeology", "cli"]
 classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Environment :: Console", "Topic :: Software Development :: Version Control :: Git"]
 
 [project.optional-dependencies]

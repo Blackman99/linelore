@@ -1,0 +1,12 @@
+{
+ "id": 7095820,
+ "number": 2462,
+ "title": "Colored, cleared cells are deleted when resizing the window",
+ "body": "### Foot Version\n\nfoot version: 1.28.0-3-g180df200 (Sep 08 2026, branch 'master') -pgo +ime -graphemes +toplevel-tag +blur +assertions\n\n### TERM environment variable\n\nfoot\n\n### Compositor Name and Version\n\nswayfx version 0.5.3 (based on sway 1.11.0)\n\n### Distribution\n\nNixOS 25.11\n\n### Terminal multiplexer\n\n_No response_\n\n### Shell, TUI, application\n\n_No response_\n\n### Server/standalone mode\n\n- [x]",
+ "state": "closed",
+ "html_url": "https://codeberg.org/dnkl/foot/issues/2462",
+ "user": {
+  "id": 697371,
+  "login": "celinakalus"
+ }
+}

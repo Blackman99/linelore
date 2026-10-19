@@ -4,9 +4,9 @@ Requires Python 3.9+ and `git`.
 
 ```bash
 pipx install git+https://github.com/Blackman99/linelore
-# or
-pip install https://github.com/Blackman99/linelore/releases/download/v0.2.0/linelore-0.2.0-py3-none-any.whl
 ```
+
+Or download the wheel from the [latest release](https://github.com/Blackman99/linelore/releases/latest) and `pip install linelore-*.whl`.
 
 Check it: `linelore --version` and `linelore demo`.
 
