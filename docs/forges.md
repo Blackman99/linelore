@@ -31,13 +31,16 @@ linelore src/app.py:42 --forge gitea --api https://git.example.com/api/v1
 linelore src/app.py:42 --api https://ghe.example.com/api/v3             # GitHub Enterprise
 ```
 
-`--api` ending in `/api/v4` means GitLab and `/api/v1` means Gitea/Forgejo; anything else is GitHub. `--forge forgejo` is accepted as another name for `gitea` (same API). `LINELORE_API` still works for GitHub Enterprise; it is ignored for GitLab and Gitea remotes so a GHES setting can't send requests to the wrong place.
+`--api` ending in `/api/v4` means GitLab and `/api/v1` means Gitea/Forgejo; anything else is GitHub. `--forge forgejo` is accepted as another name for `gitea` (same API); messages then call it Forgejo and suggest `FORGEJO_TOKEN`. `LINELORE_API` still works for GitHub Enterprise; it is ignored for GitLab and Gitea remotes so a GHES setting can't send requests to the wrong place.
 
 Tokens are only sent to the forge they belong to: `GITLAB_TOKEN` never goes to GitHub, and your GitHub token never goes to a GitLab or Gitea host. For a GHES host linelore asks `gh auth token --hostname HOST`.
 
 ## What each forge gives you
 
-The output and the `--json` shape are the same on every forge; `forge` tells you which one answered (`"github"`, `"gitlab"` or `"gitea"`).
+The output and the `--json` shape are the same on every forge; `forge` tells you which API answered (`"github"`, `"gitlab"` or `"gitea"`). Forgejo speaks the Gitea API, so it is `"gitea"` too, whatever it's called in messages.
+
+!!! note "Gitea or Forgejo?"
+    Only notes and errors name the forge ("Forgejo rejected the token…"). linelore says Forgejo for `codeberg.org`, `code.forgejo.org`, host names with a `forgejo` part (`forgejo.example.com`, `git.forgejo.example.org`) and `--forge forgejo`. On any other Gitea-style host it asks `/api/v1/version` once, anonymously, and only when it has an error to report (Forgejo 7+ answers like `11.0.1+gitea-1.22.0`). The answer is cached; if that request fails, the message just says Gitea. Successful lookups never make this request.
 
 **GitHub.** Commit → PRs (`/repos/{o}/{r}/commits/{sha}/pulls`, finds squash and rebase merges) → closing issues (GraphQL `closingIssuesReferences`, needs a token; without one, `Fixes`/`Closes`/`Resolves #N` in the PR are promoted) → review comments on the file.
 

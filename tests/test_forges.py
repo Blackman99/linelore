@@ -626,6 +626,85 @@ def test_cli_forge_failure_exit_3_without_offline_note(tmp_path, capsys, monkeyp
     assert "lookup failed: cannot reach GitLab (gitlab.com): timed out" in out and "offline" not in out
 
 
+# ------------------------------------------------ Forgejo by name (issue #5)
+
+SELF = "https://git.example.com/api/v1"
+
+
+def test_forgejo_name_from_flag_and_host():
+    spec = resolve_forge("git.example.com", forge="forgejo")
+    assert (spec.name, spec.flavor, spec.title) == ("gitea", "forgejo", "Forgejo")
+    assert resolve_forge("git.example.com", forge="gitea").title == "Gitea"
+    for host, title in (("git.forgejo.example.org", "Forgejo"), ("forgejo-dev.corp.example", "Forgejo"),
+                        ("codeberg.org", "Forgejo"), ("gitea.com", "Gitea"), ("notforgejo.example", "Gitea")):
+        assert resolve_forge(host, forge="gitea").title == title, host
+    gt = make_forge(spec, opener=Router({"*": (401, {"message": "token is required"})}), cache_dir=False, token="bad")
+    with pytest.raises(Unauthorized) as e:
+        gt.commit_pulls("team", "svc", "a" * 40)
+    assert str(e.value) == "Forgejo rejected the token (401 on git.example.com); check FORGEJO_TOKEN"
+    assert not any(u.endswith("/version") for u in gt._open.calls)  # the flag said so: nothing to ask
+
+
+@pytest.mark.parametrize("version,title,var", [
+    ("11.0.1+gitea-1.22.0", "Forgejo", "FORGEJO_TOKEN"),
+    ("1.22.3", "Gitea", "GITEA_TOKEN"),
+])
+def test_self_hosted_error_asks_version_once(tmp_path, version, title, var):
+    r = Router({SELF + "/version": (200, {"version": version}), "*": (401, {"message": "token is required"})})
+    gt = Gitea("bad", api=SELF, opener=r, cache_dir=str(tmp_path))
+    for _ in range(2):
+        with pytest.raises(Unauthorized) as e:
+            gt.commit_pulls("team", "svc", "a" * 40)
+        assert str(e.value) == "%s rejected the token (401 on git.example.com); check %s" % (title, var)
+    assert r.calls.count(SELF + "/version") == 1
+    probe = r.headers[r.calls.index(SELF + "/version")]
+    assert "Authorization" not in probe and gt.token == "bad"  # asked anonymously, token restored
+    # cached per host: a later run doesn't ask again
+    r2 = Router({"*": (401, {"message": "token is required"})})
+    with pytest.raises(Unauthorized, match="^%s rejected" % title):
+        Gitea("bad", api=SELF, opener=r2, cache_dir=str(tmp_path)).commit_pulls("team", "svc", "a" * 40)
+    assert SELF + "/version" not in r2.calls
+
+
+def test_version_probe_never_gets_in_the_way():
+    # /version itself fails: still a clean "Gitea" message, asked once
+    r = Router({SELF + "/version": (500, {"message": "boom"}), "*": (401, {"message": "token is required"})})
+    gt = Gitea("bad", api=SELF, opener=r, cache_dir=False)
+    for _ in range(2):
+        with pytest.raises(Unauthorized, match=r"^Gitea rejected the token \(401 on git.example.com\); check GITEA_TOKEN$"):
+            gt.commit_pulls("team", "svc", "a" * 40)
+    assert r.calls.count(SELF + "/version") == 1
+    # a lookup that works (here: "no PR") never asks
+    sha = "a" * 40
+    r = Router({SELF + "/repos/team/svc/commits/%s/pull" % sha: (404, {"message": "pull request does not exist"}),
+                SELF + "/repos/team/svc": (200, {"full_name": "team/svc"}),
+                SELF + "/repos/team/svc/git/commits/" + sha: (200, {"sha": sha})})
+    lore = build_lore(blame(sha, 1), "team", "svc", Gitea(None, api=SELF, opener=r, cache_dir=False), "f.c")
+    assert lore["notes"] == ["no pull request found for this commit (pushed directly?)"]
+    assert SELF + "/version" not in r.calls
+    # an unreachable host is not asked a second time
+    calls = []
+
+    def down(req, timeout=20):
+        calls.append(req.full_url)
+        raise urllib.error.URLError("Name or service not known")
+    with pytest.raises(ForgeError, match="^cannot reach Gitea"):
+        Gitea(None, api=SELF, opener=down, cache_dir=False).get("/repos/team/svc")
+    assert len(calls) == 1
+
+
+def test_cli_forge_forgejo_keeps_json_forge_gitea(tmp_path, capsys, monkeypatch):
+    for var in ("GITEA_TOKEN", "FORGEJO_TOKEN"):
+        monkeypatch.delenv(var, raising=False)
+    f = _repo(tmp_path, "git@git.example.com:team/svc.git")
+    r = Router({SELF + "/repos/team/svc": (404, {"message": "The target couldn't be found."})})
+    monkeypatch.setattr(cli, "make_forge", lambda spec: make_forge(spec, opener=r, cache_dir=False))
+    assert cli.main([f + ":1", "--forge", "forgejo", "--json"]) == 3
+    out = json.loads(capsys.readouterr().out)
+    assert out["forge"] == "gitea"  # the API family, as documented; the name only shows in messages
+    assert out["notes"] == ["lookup failed: team/svc not found on git.example.com (private? set FORGEJO_TOKEN)"]
+
+
 @pytest.fixture
 def browser(monkeypatch):
     opened = []

@@ -15,7 +15,7 @@ linelore demo [--json]
 | `--rev REV` | blame as of a tag or commit |
 | `--repo OWNER/REPO` | the repo on the forge (GitLab: `GROUP/SUBGROUP/PROJECT`); default from the remote |
 | `--remote NAME` | remote to read the forge and repo from (default `origin`) |
-| `--forge NAME` | `github`, `gitlab`, `gitea` or `forgejo`; default detected from the remote host |
+| `--forge NAME` | `github`, `gitlab`, `gitea` or `forgejo` (the Gitea API; messages say Forgejo); default detected from the remote host |
 | `--api URL` | API base for self-hosted forges; `/api/v4` implies GitLab, `/api/v1` Gitea |
 | `--ignore-revs-file PATH` | skip formatting commits (default `.git-blame-ignore-revs`) |
 | `--json` | one JSON object on stdout |

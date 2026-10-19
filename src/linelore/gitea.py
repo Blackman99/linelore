@@ -1,5 +1,7 @@
 """Gitea / Forgejo (Codeberg and self-hosted) backend, REST v1."""
-from .forge import CommitNotFound, Forge, ForgeError, TOKEN_VARS
+import urllib.parse
+
+from .forge import CommitNotFound, Forge, ForgeError, TOKEN_VARS, is_forgejo_host
 from .lore import closing_refs
 
 
@@ -22,6 +24,34 @@ class Gitea(Forge):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._pulls = {}
+        self._detected = None  # "gitea" / "forgejo" once asked; "" while asking or after a failed ask
+
+    def detect_flavor(self):
+        """Gitea or Forgejo, for messages on a self-hosted server whose name doesn't say.
+
+        Asks /version (Forgejo 7+ answers like "11.0.1+gitea-1.22.0") at most once
+        per instance, and only on the way to an error message from a server that
+        has already answered: a lookup never waits on it, an unreachable host is
+        never asked twice, and any failure just means "Gitea". The answer is
+        cached per host like any other.
+        """
+        if self._detected is not None:
+            return self._detected or None
+        if is_forgejo_host(urllib.parse.urlparse(self.web).hostname) or not self._answered:
+            return None
+        self._detected = ""  # _req -> _http_error -> title must not ask again
+        timeout, token = self.timeout, self.token
+        try:
+            # /version is public; without the token so a rejected token can't spoil it
+            self.timeout, self.token = min(timeout, 5.0), None
+            version = str((self.get("/version") or {}).get("version") or "")
+        except Exception:
+            return None
+        finally:
+            self.timeout, self.token = timeout, token
+        if version:
+            self._detected = "forgejo" if ("+gitea-" in version or "forgejo" in version.lower()) else "gitea"
+        return self._detected or None
 
     def _headers(self):
         h = {"Accept": "application/json"}
@@ -50,11 +80,9 @@ class Gitea(Forge):
         if hit:
             pr = val
         else:
-            try:
-                pr = self.get(path, use_cache=False)
-            except ForgeError as e:
-                if getattr(e, "status", None) != 404:
-                    raise
+            # missing={} rather than catching the 404: "no PR" is an answer, not an error
+            pr = self.get(path, use_cache=False, missing={})
+            if not pr:
                 # 404 means "no PR" — or no such repo, or no such commit. Tell them apart,
                 # uncached: right after a push (or a new token) the answer must be today's.
                 if self.get("/repos/%s/%s" % (owner, repo), missing={}, use_cache=False) == {}:
