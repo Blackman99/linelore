@@ -1,4 +1,5 @@
 """Gitea / Forgejo (Codeberg and self-hosted) backend, REST v1."""
+import re
 import urllib.parse
 
 from .forge import CommitNotFound, Forge, ForgeError, TOKEN_VARS, is_forgejo_host
@@ -10,6 +11,20 @@ MAX_REVIEW_PAGES = 10  # 500 reviews; a PR with more is a rare beast, and each p
 VERSION_TTL = 24 * 3600  # re-ask /version daily: a host can move from Gitea to Forgejo
 VERSION_TIMEOUT = 2.0    # it only decorates an error message; never make that error slow
 MAX_REVIEW_THREADS = 50  # reviews whose inline comments we fetch (one request each), newest first
+
+
+_LINK_REL = re.compile(r'(?i);\s*rel\s*=\s*(?:"([^"]*)"|([^\s;,"]+))')
+
+
+def link_rels(header):
+    """Every relation type in a Link header (RFC 8288): quoted or bare, and
+    space-separated lists, so rel="next", rel=next and rel="prev next" all count.
+    The <URI> parts are dropped first so a "?rel=next" inside a URL can't."""
+    params = re.sub(r"<[^>]*>", "", header or "")
+    rels = set()
+    for quoted, bare in _LINK_REL.findall(params):
+        rels.update((quoted or bare).lower().split())
+    return rels
 
 
 def _flavor_of(answer):
@@ -164,14 +179,14 @@ class Gitea(Forge):
             except (TypeError, ValueError):
                 total = None
             # Stop rule. Each paging header the server sent votes, and any "more" wins:
-            # Link with rel="next", or X-Total-Count not reached yet. With neither,
+            # Link with a "next" relation, or X-Total-Count not reached yet. With neither,
             # read until an empty page. An empty or repeated page always ends it, and
             # so does MAX_REVIEW_PAGES. One request too many beats dropping reviews:
             # X-Total-Count also counts other people's pending reviews, which the list
             # hides, so it can promise more than there is; the empty page settles it.
             votes = []
             if "link" in headers:
-                votes.append('rel="next"' in headers["link"])
+                votes.append("next" in link_rels(headers["link"]))
             if total is not None:
                 votes.append(len(reviews) < total)
             more = any(votes) if votes else True
