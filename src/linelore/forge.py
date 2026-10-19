@@ -291,9 +291,13 @@ class Forge:
     @property
     def title(self):
         """"GitHub", "GitLab", "Gitea" or "Forgejo"; only used in notes and errors."""
-        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname, self.flavor or self.detect_flavor())
+        return self.display_name()
 
-    def detect_flavor(self):
+    def display_name(self, ask=True):
+        """The title; ask=False never makes a request for it (connection errors)."""
+        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname, self.flavor or self.detect_flavor(ask))
+
+    def detect_flavor(self, ask=True):
         """Backends that serve two products under one API override this (Gitea)."""
         return None
 
@@ -329,7 +333,9 @@ class Forge:
     def _saw_cached_empty(self, age):
         self._empty_age = max(age, self._empty_age or 0, 0)
 
-    def _disk_get(self, key):
+    def _disk_get(self, key, ttl=None):
+        """The cached answer, or None. ttl (seconds) limits any answer's age;
+        without it only empty answers expire (after empty_ttl)."""
         path = self._disk_path(key)
         if not path or not os.path.isfile(path):
             return None
@@ -340,6 +346,8 @@ class Forge:
         except (OSError, json.JSONDecodeError):
             return None
         age = self.clock() - born
+        if ttl is not None and (age < -60 or age >= ttl):
+            return None
         if is_empty_answer(value):
             # "nothing yet" goes stale: the PR gets opened, reviews come in. An mtime
             # well in the future (the clock moved back) counts as stale too; a few
@@ -384,12 +392,12 @@ class Forge:
     def clear_cache(self):
         self._mem.clear()
 
-    def cached(self, method, path, body=None):
+    def cached(self, method, path, body=None, ttl=None):
         """(hit, value) without touching the network."""
         key = self._cache_key(method, path, body)
         hit = self._mem_get(key)
         if hit is None:
-            hit = self._disk_get(key)
+            hit = self._disk_get(key, ttl)
             if hit is not None:
                 self._mem[key] = hit
         return hit is not None, hit
@@ -424,11 +432,11 @@ class Forge:
             detail = re.sub(r"\s+", " ", msg)[:160]
         return ForgeError("%s API %s %s -> %s %s" % (self.title, method, url, code, detail))
 
-    def _req(self, method, path, body=None, use_cache=True, missing=None, with_headers=False):
+    def _req(self, method, path, body=None, use_cache=True, missing=None, with_headers=False, ttl=None):
         """JSON request. `missing` (if given) is returned for a 404 instead of raising
         and is cached like any other empty answer (so it expires after empty_ttl).
         with_headers=True returns (result, {lower-cased header: value}) and bypasses
-        the cache, which doesn't keep headers (used for paging)."""
+        the cache, which doesn't keep headers (used for paging). ttl: see _disk_get."""
         if with_headers:
             use_cache = False
         key = self._cache_key(method, path, body) if use_cache else None
@@ -436,7 +444,7 @@ class Forge:
             hit = self._mem_get(key)
             if hit is not None:
                 return hit
-            hit = self._disk_get(key)
+            hit = self._disk_get(key, ttl)
             if hit is not None:
                 self._mem[key] = hit
                 return hit
@@ -470,12 +478,13 @@ class Forge:
             err.body = msg
             raise err
         except urllib.error.URLError as e:
-            raise ForgeError("cannot reach %s (%s): %s" % (self.title, self.host, e.reason))
+            # ask=False: a server that just failed to answer isn't asked again for its name
+            raise ForgeError("cannot reach %s (%s): %s" % (self.display_name(ask=False), self.host, e.reason))
         except (OSError, ValueError) as e:  # timeouts, resets
             if "timed out" in str(e).lower():
                 raise ForgeError("%s (%s) did not answer within %gs; retry, or raise LINELORE_TIMEOUT"
-                                 % (self.title, self.host, self.timeout))
-            raise ForgeError("cannot reach %s (%s): %s" % (self.title, self.host, e))
+                                 % (self.display_name(ask=False), self.host, self.timeout))
+            raise ForgeError("cannot reach %s (%s): %s" % (self.display_name(ask=False), self.host, e))
         try:
             result = json.loads(raw or "null")
         except ValueError:

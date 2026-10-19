@@ -7,7 +7,17 @@ from .lore import closing_refs
 
 PAGE_LIMIT = 50        # Gitea's and Codeberg's default MAX_RESPONSE_ITEMS
 MAX_REVIEW_PAGES = 10  # 500 reviews; a PR with more is a rare beast, and each page is a request
+VERSION_TTL = 24 * 3600  # re-ask /version daily: a host can move from Gitea to Forgejo
+VERSION_TIMEOUT = 2.0    # it only decorates an error message; never make that error slow
 MAX_REVIEW_THREADS = 50  # reviews whose inline comments we fetch (one request each), newest first
+
+
+def _flavor_of(answer):
+    """"forgejo", "gitea", or "" when a /version answer says nothing usable."""
+    version = str((answer.get("version") if isinstance(answer, dict) else "") or "")
+    if not version:
+        return ""
+    return "forgejo" if ("+gitea-" in version or "forgejo" in version.lower()) else "gitea"
 
 
 def _state(pr):
@@ -26,31 +36,36 @@ class Gitea(Forge):
         self._pulls = {}
         self._detected = None  # "gitea" / "forgejo" once asked; "" while asking or after a failed ask
 
-    def detect_flavor(self):
+    def detect_flavor(self, ask=True):
         """Gitea or Forgejo, for messages on a self-hosted server whose name doesn't say.
 
         Asks /version (Forgejo 7+ answers like "11.0.1+gitea-1.22.0") at most once
-        per instance, and only on the way to an error message from a server that
-        has already answered: a lookup never waits on it, an unreachable host is
-        never asked twice, and any failure just means "Gitea". The answer is
-        cached per host like any other.
+        per instance, only on the way to an error message from a server that has
+        already answered, anonymously, with a VERSION_TIMEOUT cap: a lookup never
+        waits on it and any failure just means "Gitea". ask=False (connection
+        errors) only uses an earlier answer. Answers are cached for VERSION_TTL.
         """
         if self._detected is not None:
             return self._detected or None
-        if is_forgejo_host(urllib.parse.urlparse(self.web).hostname) or not self._answered:
+        if is_forgejo_host(urllib.parse.urlparse(self.web).hostname):
+            return None
+        hit, answer = self.cached("GET", "/version", ttl=VERSION_TTL)
+        if hit:
+            self._detected = _flavor_of(answer)
+            return self._detected or None
+        if not ask or not self._answered:
             return None
         self._detected = ""  # _req -> _http_error -> title must not ask again
         timeout, token = self.timeout, self.token
         try:
             # /version is public; without the token so a rejected token can't spoil it
-            self.timeout, self.token = min(timeout, 5.0), None
-            version = str((self.get("/version") or {}).get("version") or "")
+            self.timeout, self.token = min(timeout, VERSION_TIMEOUT), None
+            answer = self.get("/version", ttl=VERSION_TTL)
         except Exception:
             return None
         finally:
             self.timeout, self.token = timeout, token
-        if version:
-            self._detected = "forgejo" if ("+gitea-" in version or "forgejo" in version.lower()) else "gitea"
+        self._detected = _flavor_of(answer)
         return self._detected or None
 
     def _headers(self):

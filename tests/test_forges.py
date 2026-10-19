@@ -562,6 +562,16 @@ def test_empty_answer_from_the_future_is_stale(tmp_path):
 
 def test_describe_age():
     assert [describe_age(s) for s in (5, 60, 59 * 60 + 59, 3 * 3600)] == ["just now", "1 min ago", "59 min ago", "3 h ago"]
+    assert [describe_age(s) for s in (-59, -0.5, 0, 59.9)] == ["just now"] * 4  # never "0 min ago" (#13)
+
+
+def test_slightly_future_mtime_says_just_now(tmp_path):
+    GitHub("t", opener=Router({GH_PULLS: (200, [])}), cache_dir=str(tmp_path)).commit_pulls("o", "r", "e" * 40)
+    gh = GitHub("t", opener=Router({}), cache_dir=str(tmp_path))
+    gh.clock = later(-45)  # file mtime 45 s ahead of the clock (NTP skew): still trusted, and "just now"
+    lore = build_lore(blame("e" * 40, 3), "o", "r", gh, "app.py")
+    assert lore["notes"] == ["no pull request found for this commit (pushed directly?); "
+                             "cached just now (LINELORE_CACHE_EMPTY_TTL=0 to re-check)"]
 
 
 # ------------------------------------------------------------ text helpers
@@ -705,6 +715,67 @@ def test_self_hosted_error_asks_version_once(tmp_path, version, title, var):
     with pytest.raises(Unauthorized, match="^%s rejected" % title):
         Gitea("bad", api=SELF, opener=r2, cache_dir=str(tmp_path)).commit_pulls("team", "svc", "a" * 40)
     assert SELF + "/version" not in r2.calls
+
+
+class Flaky:
+    """Answers its routes, then fails every later request with `error`; records timeouts."""
+
+    def __init__(self, routes, answers, error):
+        self.router, self.answers, self.error, self.timeouts = Router(routes), answers, error, []
+
+    @property
+    def calls(self):
+        return self.router.calls
+
+    def __call__(self, req, timeout=20):
+        self.timeouts.append(timeout)
+        if len(self.router.calls) >= self.answers:
+            self.router.calls.append(req.full_url)
+            raise self.error
+        return self.router(req, timeout)
+
+
+@pytest.mark.parametrize("error,message", [
+    (OSError("The read operation timed out"), "Gitea (git.example.com) did not answer within 30s"),
+    (urllib.error.URLError("Connection refused"), "cannot reach Gitea (git.example.com): Connection refused"),
+])
+def test_connection_errors_never_probe(error, message):
+    op = Flaky({SELF + "/repos/team/svc": (200, {"full_name": "team/svc"}), SELF + "/version": (200, {"version": "11.0.1+gitea-1.22.0"})},
+               1, error)
+    gt = Gitea(None, api=SELF, opener=op, cache_dir=False)
+    gt.get("/repos/team/svc")  # the server answered once...
+    with pytest.raises(ForgeError) as e:
+        gt.get("/repos/team/svc/pulls/1")  # ...then stopped
+    assert str(e.value).startswith(message)
+    assert SELF + "/version" not in op.calls  # failing fast: no extra request for a name
+
+
+def test_connection_error_uses_a_cached_name(tmp_path):
+    r = Router({SELF + "/version": (200, {"version": "11.0.1+gitea-1.22.0"}), "*": (401, {"message": "no"})})
+    with pytest.raises(Unauthorized, match="^Forgejo"):
+        Gitea("bad", api=SELF, opener=r, cache_dir=str(tmp_path)).get("/repos/team/svc")
+    op = Flaky({}, 0, OSError("timed out"))
+    with pytest.raises(ForgeError, match=r"^Forgejo \(git.example.com\) did not answer"):
+        Gitea(None, api=SELF, opener=op, cache_dir=str(tmp_path)).get("/repos/team/svc")
+    assert op.calls == [SELF + "/repos/team/svc"]
+
+
+def test_version_probe_timeout_and_daily_refresh(tmp_path):
+    from linelore.gitea import VERSION_TIMEOUT, VERSION_TTL
+    assert VERSION_TIMEOUT <= 2 and VERSION_TTL == 24 * 3600
+    op = Flaky({SELF + "/version": (200, {"version": "1.22.3"}), "*": (401, {"message": "no"})}, 99, None)
+    with pytest.raises(Unauthorized, match="^Gitea"):
+        Gitea("bad", api=SELF, opener=op, cache_dir=str(tmp_path)).get("/repos/team/svc")
+    assert op.timeouts == [30, VERSION_TIMEOUT]  # the probe gets the short leash
+    # the host moved to Forgejo: within the day the old name stays, after it the new one shows
+    moved = {SELF + "/version": (200, {"version": "11.0.1+gitea-1.22.0"}), "*": (401, {"message": "no"})}
+    for shift, title, asked in ((VERSION_TTL - 60, "Gitea", False), (VERSION_TTL + 1, "Forgejo", True)):
+        r = Router(moved)
+        gt = Gitea("bad", api=SELF, opener=r, cache_dir=str(tmp_path))
+        gt.clock = later(shift)
+        with pytest.raises(Unauthorized, match="^%s rejected" % title):
+            gt.get("/repos/team/svc")
+        assert (SELF + "/version" in r.calls) is asked
 
 
 def test_version_probe_never_gets_in_the_way():
