@@ -263,6 +263,7 @@ class Forge:
         self._mem = {}
         self.empty_ttl = empty_ttl()
         self._empty_age = None  # oldest empty answer served from disk; see pop_cached_empty_age
+        self._notices = []
         # cache_dir=False means caller forced off; None means resolve from env
         if cache_dir is False:
             self.cache_dir = None
@@ -334,6 +335,16 @@ class Forge:
         except OSError:
             pass
 
+    def notice(self, text):
+        """Something the reader should know about this lookup (e.g. a list was cut short)."""
+        if text not in self._notices:
+            self._notices.append(text)
+
+    def pop_notices(self):
+        """Notices since the last call; lore turns them into notes."""
+        out, self._notices = self._notices, []
+        return out
+
     def pop_cached_empty_age(self):
         """Age in seconds of the oldest empty answer read from the disk cache since
         the last call (None if there was none), so "no PR" can say it was cached."""
@@ -383,9 +394,13 @@ class Forge:
             detail = re.sub(r"\s+", " ", msg)[:160]
         return ForgeError("%s API %s %s -> %s %s" % (self.title, method, url, code, detail))
 
-    def _req(self, method, path, body=None, use_cache=True, missing=None):
+    def _req(self, method, path, body=None, use_cache=True, missing=None, with_headers=False):
         """JSON request. `missing` (if given) is returned for a 404 instead of raising
-        and is cached like any other empty answer (so it expires after empty_ttl)."""
+        and is cached like any other empty answer (so it expires after empty_ttl).
+        with_headers=True returns (result, {lower-cased header: value}) and bypasses
+        the cache, which doesn't keep headers (used for paging)."""
+        if with_headers:
+            use_cache = False
         key = self._cache_key(method, path, body) if use_cache else None
         if key is not None:
             hit = self._mem_get(key)
@@ -406,6 +421,8 @@ class Forge:
         try:
             with self._open(req, timeout=self.timeout) as r:
                 raw = r.read().decode("utf-8", errors="replace")
+                hdrs = getattr(r, "headers", None)
+                headers = {k.lower(): v for k, v in hdrs.items()} if hdrs else {}
         except urllib.error.HTTPError as e:
             msg = ""
             try:
@@ -415,7 +432,7 @@ class Forge:
             if e.code == 404 and missing is not None:
                 if key is not None:
                     self._store(key, missing)
-                return missing
+                return (missing, {}) if with_headers else missing
             err = self._http_error(method, url, e.code, msg, e.headers)
             err.status = e.code
             err.body = msg
@@ -434,7 +451,7 @@ class Forge:
                              % (url, default_api(self.name, self.host)))
         if key is not None:
             self._store(key, result)
-        return result
+        return (result, headers) if with_headers else result
 
     def get(self, path, **kw):
         return self._req("GET", path, **kw)

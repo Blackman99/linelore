@@ -3,6 +3,11 @@ from .forge import CommitNotFound, Forge, ForgeError, TOKEN_VARS
 from .lore import closing_refs
 
 
+PAGE_LIMIT = 50        # Gitea's and Codeberg's default MAX_RESPONSE_ITEMS
+MAX_REVIEW_PAGES = 10  # 500 reviews; a PR with more is a rare beast, and each page is a request
+MAX_REVIEW_THREADS = 50  # reviews whose inline comments we fetch (one request each), newest first
+
+
 def _state(pr):
     return "open" if pr.get("state") == "open" else "closed"
 
@@ -85,12 +90,62 @@ class Gitea(Forge):
                         "body": issue.get("body") or ""})
         return out
 
+    def _reviews(self, owner, repo, number):
+        """A PR's reviews, oldest first (Gitea's order), up to MAX_REVIEW_PAGES pages.
+
+        Returns (reviews, cut, total): cut is True when there were more pages than
+        we read; total is the server's X-Total-Count when it sent one.
+        /pulls/N/reviews pages with ?limit=&page= and sends X-Total-Count (some
+        versions also send Link). Page URLs are built here rather than taken from
+        Link, so a server with a wrong ROOT_URL can't send the token elsewhere.
+        The whole list is cached as one answer; a cut-short one is stored as
+        {"reviews": [...], "total": N} so its note survives a cache hit.
+        """
+        base = "/repos/%s/%s/pulls/%d/reviews" % (owner, repo, number)
+        key = "%s?limit=%d&page=all" % (base, PAGE_LIMIT)
+        hit, val = self.cached("GET", key)
+        if hit:
+            if isinstance(val, dict):
+                return val.get("reviews") or [], True, val.get("total")
+            return val, False, None
+        reviews, seen, total, cut = [], set(), None, False
+        for page in range(1, MAX_REVIEW_PAGES + 1):
+            items, headers = self.get("%s?limit=%d&page=%d" % (base, PAGE_LIMIT, page), with_headers=True)
+            fresh = [r for r in (items if isinstance(items, list) else []) if isinstance(r, dict) and r.get("id") not in seen]
+            if not fresh:
+                break  # past the end, or a server that ignores ?page= and repeats itself
+            seen.update(r.get("id") for r in fresh)
+            reviews.extend(fresh)
+            try:
+                total = int(headers.get("x-total-count"))
+            except (TypeError, ValueError):
+                total = None
+            if "link" in headers:
+                more = 'rel="next"' in headers["link"]
+            elif total is not None:
+                more = len(reviews) < total  # pending reviews of others count but are hidden: an empty page ends it
+            else:
+                more = True  # no paging headers at all: read until an empty page
+            if not more:
+                break
+            cut = page == MAX_REVIEW_PAGES
+        self.remember("GET", key, {"reviews": reviews, "total": total} if cut else reviews)
+        return reviews, cut, total
+
     def pull_review_comments(self, owner, repo, number):
-        reviews = self.get("/repos/%s/%s/pulls/%d/reviews?limit=50" % (owner, repo, number)) or []
+        reviews, cut, total = self._reviews(owner, repo, number)
+        if cut:
+            self.notice("PR #%d has %s reviews; only the first %d were read for review comments"
+                        % (number, total if total and total > len(reviews) else "more than %d" % len(reviews),
+                           len(reviews)))
+        threads = [r for r in reviews if r.get("comments_count") and r.get("id")]
+        if len(threads) > MAX_REVIEW_THREADS:
+            self.notice("PR #%d has %d reviews with inline comments; only the newest %d were read"
+                        % (number, len(threads), MAX_REVIEW_THREADS))
+            threads = threads[-MAX_REVIEW_THREADS:]
         out = []
-        for r in reviews[:30]:
-            if not r.get("comments_count") or not r.get("id"):
-                continue
+        for r in threads:
+            # one review's comments come back in one response (this endpoint doesn't page)
             for c in self.get("/repos/%s/%s/pulls/%d/reviews/%d/comments" % (owner, repo, number, r["id"])) or []:
                 # Gitea's position / original_position are new-side / old-side line numbers
                 out.append({

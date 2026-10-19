@@ -180,6 +180,8 @@ def build_lore(blame, owner, repo, gh, path, max_comments=5, line_hints=None, fo
         entry["review_comments"] = [{"author": (c.get("user") or {}).get("login"), "url": c.get("html_url"),
                                      "line": c.get("line") or c.get("original_line"),
                                      "body": excerpt(c.get("body"), 240), "near": near} for c in cs[:max_comments]]
+        for n in getattr(gh, "pop_notices", list)():
+            _add_note(lore, n)
         lore["pulls"].append(entry)
     return lore
 
