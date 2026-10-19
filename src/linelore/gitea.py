@@ -148,12 +148,18 @@ class Gitea(Forge):
                 total = int(headers.get("x-total-count"))
             except (TypeError, ValueError):
                 total = None
+            # Stop rule. Each paging header the server sent votes, and any "more" wins:
+            # Link with rel="next", or X-Total-Count not reached yet. With neither,
+            # read until an empty page. An empty or repeated page always ends it, and
+            # so does MAX_REVIEW_PAGES. One request too many beats dropping reviews:
+            # X-Total-Count also counts other people's pending reviews, which the list
+            # hides, so it can promise more than there is; the empty page settles it.
+            votes = []
             if "link" in headers:
-                more = 'rel="next"' in headers["link"]
-            elif total is not None:
-                more = len(reviews) < total  # pending reviews of others count but are hidden: an empty page ends it
-            else:
-                more = True  # no paging headers at all: read until an empty page
+                votes.append('rel="next"' in headers["link"])
+            if total is not None:
+                votes.append(len(reviews) < total)
+            more = any(votes) if votes else True
             if not more:
                 break
             cut = page == MAX_REVIEW_PAGES
@@ -167,6 +173,8 @@ class Gitea(Forge):
                         % (number, total if total and total > len(reviews) else "more than %d" % len(reviews),
                            len(reviews)))
         threads = [r for r in reviews if r.get("comments_count") and r.get("id")]
+        # newest = highest id; don't trust the server's order for which ones to keep
+        threads.sort(key=lambda r: r["id"] if isinstance(r["id"], int) else 0)
         if len(threads) > MAX_REVIEW_THREADS:
             self.notice("PR #%d has %d reviews with inline comments; only the newest %d were read"
                         % (number, len(threads), MAX_REVIEW_THREADS))

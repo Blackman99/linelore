@@ -350,6 +350,25 @@ def test_gitea_reviews_page_by_link_and_without_headers():
     assert [u for u in r.calls if "/reviews?" in u] == [REVIEWS % 1, REVIEWS % 2, REVIEWS % 3]
 
 
+NEXT, NO_NEXT = '<%s>; rel="next"' % (REVIEWS % 2), '<%s>; rel="first"' % (REVIEWS % 1)
+
+
+@pytest.mark.parametrize("headers,pages", [
+    ({"Link": NEXT, "X-Total-Count": "50"}, 2),     # Link says more, total says done: more wins
+    ({"Link": NO_NEXT, "X-Total-Count": "51"}, 2),  # total says more (maybe a hidden pending review): ask, empty page ends it
+    ({"Link": NO_NEXT, "X-Total-Count": "50"}, 1),  # both say done
+    ({"Link": NEXT}, 2),
+    ({"Link": NO_NEXT}, 1),
+    ({"X-Total-Count": "51"}, 2),
+    ({"X-Total-Count": "50"}, 1),
+    ({}, 2),                                         # nothing to go on: until an empty page
+])
+def test_gitea_review_paging_stop_rule(headers, pages):
+    r = Router({REVIEWS % 1: (200, fake_reviews(50), headers), REVIEWS % 2: (200, [])})
+    Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False).pull_review_comments("dnkl", "foot", 2463)
+    assert r.calls == [REVIEWS % n for n in range(1, pages + 1)]
+
+
 def test_gitea_server_ignoring_page_param_does_not_loop():
     r = Router({CB + "/pulls/2463/reviews?*": (200, fake_reviews(50))})
     Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False).pull_review_comments("dnkl", "foot", 2463)
@@ -378,6 +397,7 @@ def test_gitea_review_thread_cap_reads_the_newest():
     reviews = fake_reviews(60)
     for rv in reviews:
         rv["comments_count"] = 2
+    reviews.reverse()  # a server that lists newest first must not make us keep the oldest
     routes = paged(reviews, 2, lambda page, last: {"X-Total-Count": "60"})
     routes.update(dict(comment_route(i) for i in range(60)))
     r = Router(routes)
