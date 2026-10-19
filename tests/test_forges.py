@@ -7,13 +7,14 @@ import io
 import json
 import os
 import subprocess
+import time
 import urllib.error
 
 import pytest
 
 from linelore import cli
-from linelore.forge import (CommitNotFound, ForgeError, UnknownForge, Unauthorized, make_forge, resolve_forge,
-                            web_from_api)
+from linelore.forge import (EMPTY_TTL, CommitNotFound, ForgeError, UnknownForge, Unauthorized, describe_age,
+                            empty_ttl, make_forge, resolve_forge, web_from_api)
 from linelore.gitea import Gitea
 from linelore.github import GitHub
 from linelore.gitlab import GitLab
@@ -337,6 +338,89 @@ def test_cache_is_per_forge(tmp_path):
     r2 = Router({"*": (200, [])})
     Gitea(None, api="https://x.example/api", opener=r2, cache_dir=str(tmp_path)).get("/same")
     assert len(r1.calls) == 1 and len(r2.calls) == 1  # same host + path, different forge: no cross-talk
+
+
+# ------------------------------------------- empty answers expire (issue #3)
+
+GH_PULLS = "https://api.github.com/repos/o/r/commits/%s/pulls" % ("e" * 40)
+GH_PR = {"number": 41, "title": "Add the thing", "html_url": "https://github.com/o/r/pull/41",
+         "user": {"login": "dev"}, "merged_at": "2026-10-19T08:00:00Z", "state": "closed", "body": ""}
+
+
+def later(seconds):
+    start = time.time()
+    return lambda: start + seconds
+
+
+def test_no_pr_answer_expires_and_the_new_pr_is_found(tmp_path):
+    cache = str(tmp_path)
+    # 1. the commit is still on a feature branch: GitHub says "no PRs"
+    r = Router({GH_PULLS: (200, [])})
+    assert GitHub("t", opener=r, cache_dir=cache).commit_pulls("o", "r", "e" * 40) == []
+    # 2. the PR is opened and merged; ten minutes later the cached "no PR" still answers, and says so
+    r = Router({GH_PULLS: (200, [GH_PR]), "*": (200, {})})
+    gh = GitHub("t", opener=r, cache_dir=cache)
+    gh.clock = later(10 * 60 + 30)
+    lore = build_lore(blame("e" * 40, 3), "o", "r", gh, "app.py")
+    assert lore["pulls"] == [] and r.calls == []
+    assert lore["notes"] == ["no pull request found for this commit (pushed directly?); "
+                             "cached 10 min ago (LINELORE_CACHE_EMPTY_TTL=0 to re-check)"]
+    # 3. after the hour the empty answer is stale: linelore asks again and finds the PR
+    gh = GitHub("t", opener=r, cache_dir=cache)
+    gh.clock = later(EMPTY_TTL + 1)
+    assert [p["number"] for p in gh.commit_pulls("o", "r", "e" * 40)] == [41] and r.calls == [GH_PULLS]
+    # 4. a real answer keeps the old behaviour: cached for good, no expiry
+    r = Router({})
+    gh = GitHub("t", opener=r, cache_dir=cache)
+    gh.clock = later(365 * 24 * 3600)
+    assert [p["number"] for p in gh.commit_pulls("o", "r", "e" * 40)] == [41] and r.calls == []
+
+
+def test_gitea_no_pr_expires_and_unpushed_commit_is_not_cached(tmp_path):
+    sha = "f" * 40
+    pull = CB + "/commits/%s/pull" % sha
+    no_pr = (404, {"message": "pull request does not exist"})
+    # not pushed yet: commit-not-found must not stick once it is pushed
+    r = Router({pull: no_pr, CB: (200, {"full_name": "dnkl/foot"})})
+    with pytest.raises(CommitNotFound):
+        Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path)).commit_pulls("dnkl", "foot", sha)
+    r = Router({pull: no_pr, CB: (200, {"full_name": "dnkl/foot"}), CB + "/git/commits/" + sha: (200, {"sha": sha})})
+    assert Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path)).commit_pulls("dnkl", "foot", sha) == []
+    # the PR shows up; within the hour the cached "no PR" answers, after it the PR is found
+    r = Router({pull: (200, fixture("gitea_commit_pull.json"))})
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path))
+    gt.clock = later(EMPTY_TTL - 60)
+    assert gt.commit_pulls("dnkl", "foot", sha) == [] and r.calls == []
+    gt = Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=str(tmp_path))
+    gt.clock = later(EMPTY_TTL + 1)
+    assert [p["number"] for p in gt.commit_pulls("dnkl", "foot", sha)] == [2463] and r.calls == [pull]
+
+
+def test_empty_ttl_setting(tmp_path, monkeypatch):
+    assert empty_ttl() == EMPTY_TTL == 3600
+    for raw, want in (("600", 600), ("0", 0), ("-5", 0), ("soon", EMPTY_TTL), ("", EMPTY_TTL)):
+        monkeypatch.setenv("LINELORE_CACHE_EMPTY_TTL", raw)
+        assert empty_ttl() == want
+    # 0: empty answers never reach the disk; real ones still do
+    monkeypatch.setenv("LINELORE_CACHE_EMPTY_TTL", "0")
+    gh = GitHub("t", opener=Router({GH_PULLS: (200, []), "*": (200, [GH_PR])}), cache_dir=str(tmp_path))
+    gh.commit_pulls("o", "r", "e" * 40)
+    assert not list(tmp_path.rglob("*.json"))
+    gh.get("/repos/o/r/pulls/41/comments?per_page=100")
+    assert len(list(tmp_path.rglob("*.json"))) == 1
+
+
+def test_empty_answer_from_the_future_is_stale(tmp_path):
+    r = Router({GH_PULLS: (200, [])})
+    GitHub("t", opener=r, cache_dir=str(tmp_path)).commit_pulls("o", "r", "e" * 40)
+    gh = GitHub("t", opener=r, cache_dir=str(tmp_path))
+    gh.clock = later(-600)  # the clock went back: don't trust the file for another hour+
+    gh.commit_pulls("o", "r", "e" * 40)
+    assert len(r.calls) == 2
+
+
+def test_describe_age():
+    assert [describe_age(s) for s in (5, 60, 59 * 60 + 59, 3 * 3600)] == ["just now", "1 min ago", "59 min ago", "3 h ago"]
 
 
 # ------------------------------------------------------------ text helpers

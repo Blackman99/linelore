@@ -50,10 +50,11 @@ class Gitea(Forge):
             except ForgeError as e:
                 if getattr(e, "status", None) != 404:
                     raise
-                # 404 means "no PR" — or no such repo, or no such commit. Tell them apart.
-                if self.get("/repos/%s/%s" % (owner, repo), missing={}) == {}:
+                # 404 means "no PR" — or no such repo, or no such commit. Tell them apart,
+                # uncached: right after a push (or a new token) the answer must be today's.
+                if self.get("/repos/%s/%s" % (owner, repo), missing={}, use_cache=False) == {}:
                     raise self._repo_missing(owner, repo)
-                if self.get("/repos/%s/%s/git/commits/%s" % (owner, repo, sha), missing={}) == {}:
+                if self.get("/repos/%s/%s/git/commits/%s" % (owner, repo, sha), missing={}, use_cache=False) == {}:
                     raise CommitNotFound("commit %s isn't on %s/%s/%s (not pushed yet?)" % (sha[:10], self.host, owner, repo))
                 pr = {}
             self.remember("GET", path, pr)

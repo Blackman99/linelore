@@ -1,7 +1,7 @@
 """Assemble the story behind a line (or a range of lines)."""
 import re
 
-from .forge import CommitNotFound, Unauthorized, change_noun, forge_title
+from .forge import CommitNotFound, Unauthorized, change_noun, describe_age, forge_title
 
 # "#12", "owner/repo#3", GitLab "group/sub/project#4"
 ISSUE_REF = re.compile(r"(?<![\w/])(?:([\w.-]+(?:/[\w.-]+)+))?#(\d+)\b")
@@ -141,6 +141,8 @@ def build_lore(blame, owner, repo, gh, path, max_comments=5, line_hints=None, fo
     if not owner:
         lore["notes"].append("no %s remote; showing local commit only" % title)
         return lore
+    cached_age = getattr(gh, "pop_cached_empty_age", lambda: None)
+    cached_age()  # forget empty answers served for earlier lookups
     try:
         pulls = gh.commit_pulls(owner, repo, blame["sha"])
         if not pulls and merge_lookup and getattr(gh, "pr_by_merge_commit_only", False):
@@ -151,7 +153,12 @@ def build_lore(blame, owner, repo, gh, path, max_comments=5, line_hints=None, fo
         lore["notes"].append(str(e))
         return lore
     if not pulls:
-        lore["notes"].append("no %s found for this commit (pushed directly?)" % noun[2])
+        note = "no %s found for this commit (pushed directly?)" % noun[2]
+        age = cached_age()
+        if age is not None:
+            # a "no PR" from the disk cache may predate the PR; say so and how to re-ask
+            note += "; cached %s (LINELORE_CACHE_EMPTY_TTL=0 to re-check)" % describe_age(age)
+        lore["notes"].append(note)
     hints = line_hints or ([blame.get("orig_line")] if blame.get("orig_line") else [])
     hints = [h for h in hints if h]
     for pr in pulls[:3]:

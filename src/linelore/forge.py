@@ -15,12 +15,15 @@ the same dict shapes, whatever the forge calls things:
 `owner/repo` is the full project path; on GitLab `repo` may contain slashes
 (group/subgroup/project). Responses are cached in memory for the process and on
 disk (see resolve_cache_dir), keyed by forge + API host + request, so the same
-commit sha is looked up once per forge.
+commit sha is looked up once per forge. Empty answers ("no PR for this commit
+yet", "no review comments yet", a 404 turned into `missing`) only stay valid on
+disk for empty_ttl() seconds, because they are the ones that change.
 """
 import hashlib
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -86,6 +89,39 @@ def resolve_cache_dir(explicit=None):
     if xdg:
         return os.path.join(xdg, "linelore")
     return os.path.join(os.path.expanduser("~"), ".cache", "linelore")
+
+
+EMPTY_TTL = 3600  # seconds an empty answer stays valid on disk (LINELORE_CACHE_EMPTY_TTL)
+
+
+def empty_ttl():
+    """Seconds an empty answer ("no PR for this commit") stays valid on disk.
+
+    LINELORE_CACHE_EMPTY_TTL overrides the one-hour default; 0 keeps empty
+    answers out of the disk cache entirely. Anything unparsable means the default.
+    """
+    raw = os.environ.get("LINELORE_CACHE_EMPTY_TTL")
+    if raw is None or not raw.strip():
+        return EMPTY_TTL
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return EMPTY_TTL
+
+
+def is_empty_answer(value):
+    """[] or {}: the forge said "nothing (yet)". Those can change; real answers rarely do."""
+    return isinstance(value, (list, dict)) and not value
+
+
+def describe_age(seconds):
+    """'just now', '1 min ago', '42 min ago', '3 h ago'."""
+    minutes = int(seconds // 60)
+    if minutes < 1:
+        return "just now"
+    if minutes < 120:
+        return "%d min ago" % minutes
+    return "%d h ago" % (minutes // 60)
 
 
 def change_noun(forge):
@@ -212,6 +248,7 @@ def resolve_forge(host, forge=None, api=None, env_api=None):
 class Forge:
     name = "github"
     token_vars = TOKEN_VARS["github"]
+    clock = staticmethod(time.time)  # tests swap this to move time forward
 
     def __init__(self, token=None, api=None, opener=None, cache_dir=None, web=None):
         self.token = token
@@ -224,6 +261,8 @@ class Forge:
         except ValueError:
             self.timeout = 30.0
         self._mem = {}
+        self.empty_ttl = empty_ttl()
+        self._empty_age = None  # oldest empty answer served from disk; see pop_cached_empty_age
         # cache_dir=False means caller forced off; None means resolve from env
         if cache_dir is False:
             self.cache_dir = None
@@ -268,23 +307,38 @@ class Forge:
             return None
         try:
             with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                value = json.load(f)
+            age = self.clock() - os.path.getmtime(path)
         except (OSError, json.JSONDecodeError):
             return None
+        if is_empty_answer(value):
+            # "nothing yet" goes stale: the PR gets opened, reviews come in. An mtime
+            # well in the future (the clock moved back) counts as stale too; a few
+            # seconds of skew (coarse clocks, network file systems) does not.
+            if age < -60 or age >= self.empty_ttl:
+                return None
+            self._empty_age = max(age, self._empty_age or 0, 0)
+        return value
 
     def _store(self, key, value):
         self._mem[key] = value
         path = self._disk_path(key)
-        if not path:
+        if not path or (is_empty_answer(value) and self.empty_ttl <= 0):
             return
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             tmp = path + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(value, f)
-            os.replace(tmp, path)
+            os.replace(tmp, path)  # fresh mtime: the TTL of an empty answer counts from here
         except OSError:
             pass
+
+    def pop_cached_empty_age(self):
+        """Age in seconds of the oldest empty answer read from the disk cache since
+        the last call (None if there was none), so "no PR" can say it was cached."""
+        age, self._empty_age = self._empty_age, None
+        return age
 
     def clear_cache(self):
         self._mem.clear()
@@ -331,7 +385,7 @@ class Forge:
 
     def _req(self, method, path, body=None, use_cache=True, missing=None):
         """JSON request. `missing` (if given) is returned for a 404 instead of raising
-        and is cached like a normal answer."""
+        and is cached like any other empty answer (so it expires after empty_ttl)."""
         key = self._cache_key(method, path, body) if use_cache else None
         if key is not None:
             hit = self._mem_get(key)

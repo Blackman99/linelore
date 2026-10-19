@@ -6,9 +6,11 @@
 
 **"no pull request found"** – the commit was pushed directly, came from a squash elsewhere, or your clone is shallow (`git fetch --unshallow`).
 
+**I just opened the PR and it still says "no pull request found".** That answer came from the cache; the note says how old it is. Empty answers are asked again after an hour, or right away with `LINELORE_CACHE_EMPTY_TTL=0 linelore FILE:LINE`. See [Cache](config.md#cache).
+
 **Can I ask about a range of lines?** Yes: `linelore file.py:10-30`. Commits are deduplicated so each sha is shown once.
 
-**Where does it cache API responses?** In memory for the process, and on disk under `~/.cache/linelore` (override or disable with `LINELORE_CACHE`).
+**Where does it cache API responses?** In memory for the process, and on disk under `~/.cache/linelore` (override or disable with `LINELORE_CACHE`). Empty answers such as "no PR yet" expire after an hour (`LINELORE_CACHE_EMPTY_TTL`).
 
 **GitLab / Gitea / Forgejo / Codeberg?** Yes, since 0.3. The forge is read from your remote; see [Forges](forges.md) for self-hosted instances and tokens.
 
