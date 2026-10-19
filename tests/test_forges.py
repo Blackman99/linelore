@@ -369,6 +369,22 @@ def test_gitea_review_paging_stop_rule(headers, pages):
     assert r.calls == [REVIEWS % n for n in range(1, pages + 1)]
 
 
+def test_gitea_review_paging_stop_rule_link_forms():
+    for link, pages in (('<u2>; rel=next', 2), ('<u2>; rel="prev next"', 2), ('<u2>; REL="Next"', 2),
+                        ('<u1>; rel="first", <u2>; rel=next', 2), ('<u?rel=next>; rel="last"', 1),
+                        ('<u1>; rel="first"; title="next"', 1), ('<u0>; rel=prev', 1), ('', 1)):
+        r = Router({REVIEWS % 1: (200, fake_reviews(50), {"Link": link}), REVIEWS % 2: (200, [])})
+        Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False).pull_review_comments("dnkl", "foot", 2463)
+        assert len(r.calls) == pages, link
+
+
+def test_link_rels():
+    from linelore.gitea import link_rels
+    assert link_rels('<a>; rel="next", <b>; rel=last') == {"next", "last"}
+    assert link_rels('<a>; rel="prev   next"; type="text/html"') == {"prev", "next"}
+    assert link_rels(None) == set() and link_rels("garbage") == set()
+
+
 def test_gitea_server_ignoring_page_param_does_not_loop():
     r = Router({CB + "/pulls/2463/reviews?*": (200, fake_reviews(50))})
     Gitea(None, api="https://codeberg.org/api/v1", opener=r, cache_dir=False).pull_review_comments("dnkl", "foot", 2463)
