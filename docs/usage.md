@@ -33,7 +33,7 @@ GitHub, GitLab and Gitea/Forgejo are detected from the remote URL; see [Forges](
 
 ## Editor integration
 
-`--json` prints one object: `forge` (`"github"`, `"gitlab"`, `"gitea"`, or `null` when unknown), `repo`, `blame`, `pulls[]` (each with `issues`, `mentions`, `review_comments`) and `notes`. The shape is the same on every forge; on GitLab `number` is the MR iid. For a range it also includes `range` and `commits[]`. Bind it to a key in your editor, e.g. in Vim:
+`--json` prints one object: `forge` (`"github"`, `"gitlab"`, `"gitea"` (Forgejo included), or `null` when unknown), `repo`, `blame`, `pulls[]` (each with `issues`, `mentions`, `review_comments`) and `notes`. The shape is the same on every forge; on GitLab `number` is the MR iid. For a range it also includes `range` and `commits[]`. Bind it to a key in your editor, e.g. in Vim:
 
 ```vim
 nnoremap <leader>w :echo system('linelore --no-color '.expand('%').':'.line('.'))<CR>

@@ -127,7 +127,6 @@ def build_lore(blame, owner, repo, gh, path, max_comments=5, line_hints=None, fo
     local_note: the note shown when gh is None ("" for none).
     """
     forge = forge or getattr(gh, "name", None)
-    title = getattr(gh, "title", None) or forge_title(forge)
     noun = change_noun(forge)
     lore = {"forge": forge, "repo": "%s/%s" % (owner, repo) if owner else None, "path": path, "blame": blame,
             "pulls": [], "notes": []}
@@ -139,7 +138,7 @@ def build_lore(blame, owner, repo, gh, path, max_comments=5, line_hints=None, fo
             lore["notes"].append(local_note)
         return lore
     if not owner:
-        lore["notes"].append("no %s remote; showing local commit only" % title)
+        lore["notes"].append("no %s remote; showing local commit only" % (getattr(gh, "title", None) or forge_title(forge)))
         return lore
     cached_age = getattr(gh, "pop_cached_empty_age", lambda: None)
     cached_age()  # forget empty answers served for earlier lookups

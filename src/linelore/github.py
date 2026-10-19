@@ -31,8 +31,8 @@ class GitHub(Forge):
     name = "github"
     token_vars = TOKEN_VARS["github"]
 
-    def __init__(self, token=None, api="https://api.github.com", opener=None, cache_dir=None, web=None):
-        super().__init__(token, api=api, opener=opener, cache_dir=cache_dir, web=web)
+    def __init__(self, token=None, api="https://api.github.com", opener=None, cache_dir=None, web=None, flavor=None):
+        super().__init__(token, api=api, opener=opener, cache_dir=cache_dir, web=web, flavor=flavor)
 
     def _headers(self):
         h = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}

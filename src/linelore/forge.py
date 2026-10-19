@@ -129,8 +129,17 @@ def change_noun(forge):
     return CHANGE_NOUN.get(forge or "github", CHANGE_NOUN["github"])
 
 
-def forge_title(forge, host=None):
-    if forge == "gitea" and host in FORGEJO_HOSTS:
+def is_forgejo_host(host):
+    """codeberg.org, code.forgejo.org, or a host name with a `forgejo` label."""
+    host = (host or "").lower()
+    return host in FORGEJO_HOSTS or "forgejo" in re.split(r"[.-]", host)
+
+
+def forge_title(forge, host=None, flavor=None):
+    """Display name. Forgejo speaks the Gitea API (forge "gitea") but is named
+    Forgejo when --forge forgejo said so (flavor), or the host or its /version
+    does (see Gitea.flavor)."""
+    if forge == "gitea" and (flavor == "forgejo" or (flavor is None and is_forgejo_host(host))):
         return "Forgejo"
     return TITLES.get(forge or "github", "GitHub")
 
@@ -146,12 +155,13 @@ class UnknownForge(ForgeError):
 class ForgeSpec:
     """Which forge, where its API lives, and its web base (for links)."""
 
-    def __init__(self, name, api, web, host=None):
+    def __init__(self, name, api, web, host=None, flavor=None):
         self.name, self.api, self.web, self.host = name, api.rstrip("/"), web.rstrip("/"), host
+        self.flavor = flavor  # "forgejo" after --forge forgejo; None = go by the host
 
     @property
     def title(self):
-        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname)
+        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname, self.flavor)
 
     def commit_url(self, full, sha):
         sep = "/-/" if self.name == "gitlab" else "/"
@@ -223,8 +233,9 @@ def resolve_forge(host, forge=None, api=None, env_api=None):
     Enterprise setting). Raises UnknownForge when there is nothing to go on.
     """
     host = _canon_host(host)
+    flavor = None
     if forge == "forgejo":
-        forge = "gitea"
+        forge, flavor = "gitea", "forgejo"  # same API; only the name differs
     name = forge or (forge_for_api(api) if api else None) or forge_for_host(host)
     if not name:
         if env_api:
@@ -238,7 +249,7 @@ def resolve_forge(host, forge=None, api=None, env_api=None):
     if not api and name == "github" and env_api:
         api = env_api
     api = (api or default_api(name, host)).rstrip("/")
-    return ForgeSpec(name, api, web_from_api(name, api), host)
+    return ForgeSpec(name, api, web_from_api(name, api), host, flavor if name == "gitea" else None)
 
 
 # --------------------------------------------------------------------------
@@ -250,8 +261,9 @@ class Forge:
     token_vars = TOKEN_VARS["github"]
     clock = staticmethod(time.time)  # tests swap this to move time forward
 
-    def __init__(self, token=None, api=None, opener=None, cache_dir=None, web=None):
+    def __init__(self, token=None, api=None, opener=None, cache_dir=None, web=None, flavor=None):
         self.token = token
+        self.flavor = flavor
         self.api = (api or default_api(self.name, None)).rstrip("/")
         self.web = (web or web_from_api(self.name, self.api)).rstrip("/")
         self.host = urllib.parse.urlparse(self.api).hostname or self.api
@@ -264,6 +276,7 @@ class Forge:
         self.empty_ttl = empty_ttl()
         self._empty_age = None  # oldest empty answer served from disk; see pop_cached_empty_age
         self._notices = []
+        self._answered = False  # the server has sent at least one HTTP response
         # cache_dir=False means caller forced off; None means resolve from env
         if cache_dir is False:
             self.cache_dir = None
@@ -275,7 +288,12 @@ class Forge:
     # -- naming -----------------------------------------------------------
     @property
     def title(self):
-        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname)
+        """"GitHub", "GitLab", "Gitea" or "Forgejo"; only used in notes and errors."""
+        return forge_title(self.name, urllib.parse.urlparse(self.web).hostname, self.flavor or self.detect_flavor())
+
+    def detect_flavor(self):
+        """Backends that serve two products under one API override this (Gitea)."""
+        return None
 
     @property
     def token_hint(self):
@@ -420,10 +438,12 @@ class Forge:
             req.add_header("Content-Type", "application/json")
         try:
             with self._open(req, timeout=self.timeout) as r:
+                self._answered = True
                 raw = r.read().decode("utf-8", errors="replace")
                 hdrs = getattr(r, "headers", None)
                 headers = {k.lower(): v for k, v in hdrs.items()} if hdrs else {}
         except urllib.error.HTTPError as e:
+            self._answered = True
             msg = ""
             try:
                 msg = e.read().decode(errors="replace")[:400]
@@ -488,4 +508,4 @@ def make_forge(spec, opener=None, cache_dir=None, token=None):
             token = find_token(urllib.parse.urlparse(spec.web).hostname)
         else:
             token = find_env_token(spec.name)
-    return cls(token, api=spec.api, opener=opener, cache_dir=cache_dir, web=spec.web)
+    return cls(token, api=spec.api, opener=opener, cache_dir=cache_dir, web=spec.web, flavor=spec.flavor)
