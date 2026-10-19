@@ -50,7 +50,7 @@ The output and the `--json` shape are the same on every forge; `forge` tells you
 
 Gitea only links a PR to its *merge* commit. When the blamed commit came in through a merge commit, linelore finds that merge locally (`git rev-list --first-parent --ancestry-path`) and asks again, so old branch-merged PRs are found too. It never attributes a commit pushed straight to the main branch to a later merge.
 
-Codeberg can take 10–20 seconds on a cold request. linelore waits up to 30 seconds (`LINELORE_TIMEOUT` to change it) and caches every answer, so the second look at the same commit is instant.
+Codeberg can take 10–20 seconds on a cold request. linelore waits up to 30 seconds (`LINELORE_TIMEOUT` to change it) and caches every answer, so the second look at the same commit is instant ("no PR" answers are re-checked after an hour; see [Cache](config.md#cache)).
 
 ## Errors you might see
 
