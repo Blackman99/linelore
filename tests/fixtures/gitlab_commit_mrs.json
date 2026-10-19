@@ -1,0 +1,22 @@
+[
+ {
+  "id": 548351814,
+  "iid": 4112,
+  "project_id": 34675721,
+  "title": "fix(packages): verify the checksum of the newest file with the same name",
+  "description": "## Description\n\n`glab packages download` verifies the file it downloads against the SHA256 stored in the registry, and `fetchChecksum` took the first file in the package whose name matched ([download.go#L308-312](https://gitlab.com/gitlab-org/cli/-/blob/b3bf6ccba7d855c656fb6bd4e1d8feb62fe8285f/internal/commands/packages/download/download.go#L308-312)). The package files API lists files by ID ascending unless asked otherwise ([package_files.rb#L45-63](https://gitlab.com/gitlab-org/gitlab/-/blob/6f4a1dae5b6a68cc38e2430397d2c44fe92ca1d5/lib/api/package_files.rb#L45-63)), so that was the oldest upload with that name. The generic download route serves the newest one: it resolves the file with `Packages::PackageFileFinder#execute!` ([generic_packages.rb#L168-169](https://gitlab.com/gitlab-org/gitlab/-/blob/6f4a1dae5b6a68cc38e2430397d2c44fe92ca1d5/lib/api/generic_packages.rb#L168-169)), which r",
+  "state": "merged",
+  "created_at": "2026-10-14T10:04:29.268Z",
+  "merged_at": "2026-10-16T01:39:01.079Z",
+  "web_url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4112",
+  "author": {
+   "id": 15767218,
+   "username": "jmrp",
+   "name": "José M. Requena Plens",
+   "web_url": "https://gitlab.com/jmrp"
+  },
+  "merge_commit_sha": "1ca63f182a37fa6b73f13789f20b9f876e3c5c74",
+  "squash_commit_sha": "28cd7b06fe62b5a25c9fd53c2bc88891297bdcd0",
+  "sha": "9e3ec279a1eeb7cb275b85a32b6a8b1b8a22365a"
+ }
+]

@@ -1,0 +1,27 @@
+{
+ "id": 3059035,
+ "url": "https://codeberg.org/api/v1/repos/dnkl/foot/pulls/2463",
+ "number": 2463,
+ "user": {
+  "id": 697371,
+  "login": "celinakalus",
+  "html_url": "https://codeberg.org/celinakalus"
+ },
+ "title": "grid: reflow: Preserve cells with background color",
+ "body": "A cell was previously considered empty if its content is empty.\r\nWhen an empty cell has a non-default background color, truncating such\r\ncells from the end of the line when reflowing is unexpected. Instead,\r\ntreat such cells as non-empty to preserve them.\r\n\r\nFixes #2462\r\n\r\nSigned-off-by: Celina Sophie Kalus <hello@celinakalus.de>",
+ "state": "closed",
+ "html_url": "https://codeberg.org/dnkl/foot/pulls/2463",
+ "merged": true,
+ "merged_at": "2026-09-10T08:36:11+02:00",
+ "merge_commit_sha": "d4896e386b3757264775e3ac2e1d1abc9d13a0c2",
+ "base": {
+  "label": "master",
+  "ref": "master",
+  "sha": "cb2771788998f6a6288e2de8273c55a8214551e0"
+ },
+ "head": {
+  "label": "preserve-colored-cells",
+  "ref": "preserve-colored-cells",
+  "sha": "beeaee955a244093b64764373017858dd59d3915"
+ }
+}

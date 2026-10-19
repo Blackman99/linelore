@@ -1,0 +1,32 @@
+[
+ {
+  "id": 21730121,
+  "body": "Is this supposed to ignore `.wraplock`?\r\n\r\nI think this change should be put into a separate patch, since it's irrelevant to \"wrap fields into struct\".",
+  "user": {
+   "id": 32674,
+   "login": "cismonx"
+  },
+  "path": ".gitignore",
+  "commit_id": "03b5fdce4ece0d0c1ba70c931aeeb67ff8e14957",
+  "original_commit_id": "",
+  "position": 5,
+  "original_position": 0,
+  "html_url": "https://codeberg.org/dnkl/foot/pulls/2439#issuecomment-21730121",
+  "pull_request_review_id": 1759028
+ },
+ {
+  "id": 21730469,
+  "body": "@cismonx wrote in https://codeberg.org/dnkl/foot/pulls/2439#issuecomment-21730121:\r\n\r\n> Is this supposed to ignore `.wraplock`?\r\n\r\nYeah, is supposed to ignore `.wraplock`.",
+  "user": {
+   "id": 587483,
+   "login": "K4"
+  },
+  "path": ".gitignore",
+  "commit_id": "03b5fdce4ece0d0c1ba70c931aeeb67ff8e14957",
+  "original_commit_id": "",
+  "position": 5,
+  "original_position": 0,
+  "html_url": "https://codeberg.org/dnkl/foot/pulls/2439#issuecomment-21730469",
+  "pull_request_review_id": 1759028
+ }
+]

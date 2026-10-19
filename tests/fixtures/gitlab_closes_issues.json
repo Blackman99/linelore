@@ -1,0 +1,11 @@
+[
+ {
+  "id": 206546076,
+  "iid": 8615,
+  "project_id": 34675721,
+  "title": "glab packages download checks a re-uploaded file against the checksum of its first upload",
+  "description": "### Summary\n\n`glab packages download` verifies the file it downloads against the SHA256 stored in the registry. When a generic package holds two files with the requested name, which is what uploading the same file name again to the same package and version produces, it checks the download against the checksum of the first upload, while GitLab serves the last one. If the two uploads differ, every v",
+  "state": "closed",
+  "web_url": "https://gitlab.com/gitlab-org/cli/-/work_items/8615"
+ }
+]

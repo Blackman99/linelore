@@ -1,0 +1,45 @@
+[
+ {
+  "id": "6a9c1750b37d513a43987b574953fceb50b03ce7",
+  "individual_note": true,
+  "notes": [
+   {"id": 1126, "type": null, "body": "Thanks, this looks right to me.", "author": {"id": 1, "username": "jmccure"},
+    "system": false, "noteable_type": "MergeRequest", "noteable_iid": 4112}
+  ]
+ },
+ {
+  "id": "3f2a1c0b9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
+  "individual_note": true,
+  "notes": [
+   {"id": 1127, "type": null, "body": "added 1 commit", "author": {"id": 2, "username": "jmrp"},
+    "system": true, "noteable_type": "MergeRequest", "noteable_iid": 4112}
+  ]
+ },
+ {
+  "id": "87805b7c09016a7058e91bdbe7b29d1f284a39e6",
+  "individual_note": false,
+  "notes": [
+   {"id": 1128, "type": "DiffNote", "body": "Could two files share an ID across package versions? If not, highest ID is the newest upload.",
+    "author": {"id": 3, "username": "jhebden"}, "system": false, "noteable_type": "MergeRequest", "noteable_iid": 4112,
+    "resolvable": true, "resolved": true,
+    "position": {"base_sha": "b3bf6ccba7d855c656fb6bd4e1aa6c81c2a1a7e2", "start_sha": "b3bf6ccba7d855c656fb6bd4e1aa6c81c2a1a7e2",
+                 "head_sha": "28cd7b06fe62b5a25c9fd53c2bc88891297bdcd0", "position_type": "text",
+                 "old_path": "internal/commands/packages/download/download.go",
+                 "new_path": "internal/commands/packages/download/download.go", "old_line": null, "new_line": 313}},
+   {"id": 1129, "type": "DiffNote", "body": "IDs are global and only grow, so the highest ID is the latest upload.",
+    "author": {"id": 2, "username": "jmrp"}, "system": false, "noteable_type": "MergeRequest", "noteable_iid": 4112,
+    "position": {"position_type": "text", "old_path": "internal/commands/packages/download/download.go",
+                 "new_path": "internal/commands/packages/download/download.go", "old_line": null, "new_line": 313}}
+  ]
+ },
+ {
+  "id": "aa05b7c09016a7058e91bdbe7b29d1f284a39e61",
+  "individual_note": false,
+  "notes": [
+   {"id": 1130, "type": "DiffNote", "body": "Nice test.", "author": {"id": 1, "username": "jmccure"}, "system": false,
+    "noteable_type": "MergeRequest", "noteable_iid": 4112,
+    "position": {"position_type": "text", "old_path": "internal/commands/packages/download/download_test.go",
+                 "new_path": "internal/commands/packages/download/download_test.go", "old_line": null, "new_line": 40}}
+  ]
+ }
+]

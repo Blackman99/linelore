@@ -69,6 +69,9 @@ ol,ul{list-style:none}
 .hop-n{grid-row:1/3;font-weight:900;font-size:clamp(48px,6.4vw,96px);line-height:.8;letter-spacing:-.05em;color:var(--o)}
 .hop-h{font-weight:900;font-size:clamp(28px,3.4vw,50px);line-height:.95;letter-spacing:-.035em;margin-bottom:10px;transform-origin:0 100%}
 .hop p{max-width:56ch}
+.hop .forge-calls{grid-column:2;max-width:none;display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:18px;row-gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--h);font-size:16px;line-height:1.4;align-items:baseline}
+.forge-calls b{font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.forge-calls span{overflow-wrap:break-word}
 .links li{border-bottom:1px solid var(--h);padding:12px 0;display:flex;flex-wrap:wrap;column-gap:18px;align-items:baseline}
 .links a{font-weight:800;font-size:clamp(20px,2vw,28px);letter-spacing:-.02em;line-height:1.15}
 .links span{font-size:15px}
@@ -110,6 +113,8 @@ ol,ul{list-style:none}
   .headline{font-size:18.6vw;max-width:none;line-height:.88}
   .ans,.why,.hop{grid-template-columns:minmax(0,1fr);row-gap:8px}
   .hop-n{grid-row:auto}
+  .hop .forge-calls{grid-column:auto;grid-template-columns:minmax(0,1fr);row-gap:2px}
+  .forge-calls span{margin-bottom:6px}
   .ans p,.ans .say{font-size:16px}
   .why-k{font-size:44px}
 }

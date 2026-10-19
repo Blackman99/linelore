@@ -1,5 +1,5 @@
 site_name: linelore docs
-site_description: The pull request, linked issues and review comments behind any line of code, in one terminal command.
+site_description: The pull request, linked issues and review comments behind any line of code, in one terminal command. GitHub, GitLab and Gitea/Forgejo.
 site_url: https://blackman99.github.io/linelore/docs/
 repo_url: https://github.com/Blackman99/linelore
 repo_name: Blackman99/linelore
@@ -21,6 +21,7 @@ nav:
   - Overview: index.md
   - Install: install.md
   - Usage: usage.md
+  - Forges: forges.md
   - Configuration: config.md
   - Command reference: reference.md
   - FAQ: faq.md

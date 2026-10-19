@@ -110,6 +110,31 @@ def dedupe_blames(blames):
     return [groups[sha] for sha in order]
 
 
+def merge_commit_for(sha, rev=None, cwd=None):
+    """The merge commit that brought `sha` into the first-parent history of rev/HEAD.
+
+    Gitea/Forgejo can only map a PR's merge commit to the PR, so for repos that
+    merge with merge commits we look the merge up locally. Returns None when
+    `sha` is on the first-parent line itself (direct push, squash, rebase,
+    fast-forward), or when git can't tell."""
+    head = rev or "HEAD"
+    try:
+        mainline = run_git(["rev-list", "--first-parent", "--merges", "%s..%s" % (sha, head)], cwd=cwd).split()
+        if not mainline:
+            return None
+        descendants = set(run_git(["rev-list", "--ancestry-path", "--merges", "%s..%s" % (sha, head)], cwd=cwd).split())
+        candidates = [c for c in mainline if c in descendants]  # newest first
+        if not candidates:
+            return None
+        merge = candidates[-1]  # the oldest mainline merge that contains sha
+        # If sha was already on the mainline before that merge, no merge brought it in.
+        p = subprocess.run(["git", "merge-base", "--is-ancestor", sha, merge + "^1"], cwd=cwd,
+                           capture_output=True, text=True)
+        return None if p.returncode == 0 else merge
+    except (GitError, OSError):
+        return None
+
+
 _REMOTE_RES = [
     re.compile(r"^git@([^:]+):(?P<o>[^/]+)/(?P<r>.+?)(?:\.git)?/?$"),
     re.compile(r"^(?:https?|ssh|git)://(?:[^@/]+@)?([^/:]+)(?::\d+)?/(?P<o>[^/]+)/(?P<r>.+?)(?:\.git)?/?$"),

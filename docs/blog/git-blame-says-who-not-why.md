@@ -173,13 +173,13 @@ Some honest limits from trying it on real repositories:
 - **Squash merges of big PRs.** The PR is found correctly, but its body may describe twenty changes, and the line you care about is one of them.
 - **`closingIssuesReferences` isn't always populated.** On `requests/adapters.py:258 --rev v2.31.0`, PR #4371 (2017) says "Resolves #4369", but GitHub returns no closing references for it. linelore still shows #4369 under mentions.
 - **Review comments are matched by line distance.** That's a heuristic. Comments on a later force-pushed revision can sit at different coordinates, and outdated comments have no line at all. Those are labelled `elsewhere in this file` rather than dropped. Only the first 100 review comments of a PR are read.
-- **GitHub and GitHub Enterprise only** (`--api https://ghe.example.com/api/v3`). GitLab and Gitea/Forgejo are planned for v0.3.
+- **Forges.** This post walks through GitHub. Since v0.3 linelore also works on GitLab (merge requests, `closes_issues`, diff notes) and Gitea/Forgejo including Codeberg; see [Forges](../forges.md). On gitlab.com, review comments need a `GITLAB_TOKEN`.
 - **It can't recover reasoning that was never written down.** If the PR body is empty and nobody reviewed it, linelore will show you that, too.
 
 ## Roadmap
 
 - **v0.2 (done)**: line ranges, follow moves/renames, cache API responses per sha.
-- **v0.3**: GitLab and Gitea/Forgejo backends; `--open` to launch the PR in a browser.
+- **v0.3 (done)**: GitLab and Gitea/Forgejo backends; `--open` to launch the PR in a browser.
 - **v0.4**: editor snippets (Neovim, VS Code task, Helix, Emacs) on top of `--json`, and an optional, clearly labelled `--summarize` that pipes the collected facts to an LLM command you supply.
 - **v1.0**: stable JSON schema, PyPI and Homebrew.
 

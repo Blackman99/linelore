@@ -29,6 +29,7 @@ Flat. No texture, shadow, border radius, skeuomorphic objects or illustration. E
 - Flush-left, ragged-right. Nothing is centred.
 - Hero: the headline "Why is this line like this?" is set huge enough to fill the measure. The code line sits on columns 1–12 in Fragment Mono. Numbered answers 01–04 sit asymmetrically on columns 5–12, with oversized orange numerals at the left of each.
 - The sections below are numbered (A, B, C) with a thick black top rule, a label on columns 1–3 and content on columns 4–12. No cards, panels or centred objects.
+- Hop 02 carries a small label/value list of the per-forge API calls (GitHub, GitLab, Gitea/Forgejo): 700 uppercase labels, Fragment Mono values that break only after `/`, one `#e4e4e4` hairline above. Added in v0.3 as a content update; no new colour, type or texture.
 - Footer is one black rule plus small type.
 
 ## Animation

@@ -1,6 +1,6 @@
 # linelore
 
-`git blame` tells you **who** changed a line. linelore tells you **why**: it follows the commit to the pull request that merged it, the issues that PR closed, and the review comments left near that line.
+`git blame` tells you **who** changed a line. linelore tells you **why**: it follows the commit to the pull request (or merge request) that merged it, the issues that PR closed, and the review comments left near that line. It works on GitHub, GitLab and Gitea/Forgejo, and reads which one from your remote.
 
 ![demo](assets/demo.gif)
 
@@ -19,6 +19,8 @@ src/requests/adapters.py:420  * If ``verify`` is a string, (i.e., it is a user-s
 
 - Editor-agnostic: one CLI, plus `--json` for editor plugins and scripts.
 - Zero dependencies (Python 3.9+ stdlib). Uses your `gh` login if you have one.
+- **GitHub, GitLab, Gitea/Forgejo** (Codeberg too), hosted or self-hosted. See [Forges](forges.md).
+- `--open` opens the PR or MR in your browser.
 - Ranges (`file:10-30`), follows renames (`-C -M`), caches API responses. Respects `.git-blame-ignore-revs`.
 
-Next: [Install](install.md) · [Usage](usage.md) · [FAQ](faq.md)
+Next: [Install](install.md) · [Usage](usage.md) · [Forges](forges.md) · [FAQ](faq.md)
