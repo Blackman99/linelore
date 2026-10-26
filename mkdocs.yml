@@ -22,6 +22,7 @@ nav:
   - Install: install.md
   - Usage: usage.md
   - Forges: forges.md
+  - Editors: editors.md
   - Summaries: summaries.md
   - Configuration: config.md
   - Command reference: reference.md

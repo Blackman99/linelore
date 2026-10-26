@@ -42,8 +42,6 @@ linelore src/app.py:42 --summarize
 
 ## Editor integration
 
-`--json` prints one object: `forge` (`"github"`, `"gitlab"`, `"gitea"` (Forgejo included), or `null` when unknown), `repo`, `blame`, `pulls[]` (each with `issues`, `mentions`, `review_comments`) and `notes`. The shape is the same on every forge; on GitLab `number` is the MR iid. For a range it also includes `range` and `commits[]`. With `--summarize` the model's answer is a separate `model_summary` field. Bind it to a key in your editor, e.g. in Vim:
+Ready-made integrations for Neovim, Emacs, VS Code and Helix are in [`editors/`](https://github.com/Blackman99/linelore/tree/main/editors); see [Editors](editors.md).
 
-```vim
-nnoremap <leader>w :echo system('linelore --no-color '.expand('%').':'.line('.'))<CR>
-```
+To build your own, `--json` prints one object: `forge` (`"github"`, `"gitlab"`, `"gitea"` (Forgejo included), or `null` when unknown), `repo`, `blame`, `pulls[]` (each with `issues`, `mentions`, `review_comments`) and `notes`. The shape is the same on every forge; on GitLab `number` is the MR iid. For a range it also includes `range` and `commits[]`. The fields the bundled plugins rely on are listed on the [Editors](editors.md#build-your-own) page.

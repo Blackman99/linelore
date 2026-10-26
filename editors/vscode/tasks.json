@@ -1,0 +1,47 @@
+// linelore tasks for VS Code. Copy into .vscode/tasks.json (or merge the
+// "tasks" and "inputs" arrays into yours). Output opens in the terminal panel,
+// where the PR, issue and review URLs are Ctrl/Cmd+click links.
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "linelore: this line",
+      "detail": "Commit, pull request, issues and review behind the cursor's line",
+      "type": "process",
+      "command": "linelore",
+      "args": ["${file}:${lineNumber}"],
+      "options": { "cwd": "${fileDirname}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "focus": false, "showReuseMessage": false }
+    },
+    {
+      // VS Code has no variable for a selection's first and last line, so a
+      // range is asked for; type e.g. 10-30.
+      "label": "linelore: a range of lines…",
+      "detail": "Every commit behind lines START-END, each PR once",
+      "type": "process",
+      "command": "linelore",
+      "args": ["${file}:${input:lineRange}"],
+      "options": { "cwd": "${fileDirname}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "focus": false, "showReuseMessage": false }
+    },
+    {
+      "label": "linelore: open the pull request",
+      "detail": "Open the PR/MR behind the cursor's line in the browser",
+      "type": "process",
+      "command": "linelore",
+      "args": ["--open", "${file}:${lineNumber}"],
+      "options": { "cwd": "${fileDirname}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated", "clear": true, "showReuseMessage": false }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "lineRange",
+      "type": "promptString",
+      "description": "Lines to explain, as START-END (e.g. 10-30)"
+    }
+  ]
+}

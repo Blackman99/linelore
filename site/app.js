@@ -127,3 +127,79 @@
     setTimeout(function () { copy.classList.remove('done'); copy.textContent = 'Copy install command'; }, 1800);
   });
 })();
+
+// C: in your editor. Tabs with arrow keys; one pass through the four editors when the section first comes into view.
+(function () {
+  var box = document.querySelector('.editors');
+  if (!box) return;
+  var motion = document.documentElement.classList.contains('motion');
+  var tabs = [].slice.call(box.querySelectorAll('.ed-tab'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  var ind = box.querySelector('.ed-ind');
+  var tick = box.querySelector('.ed-tick');
+  var cur = 0, timer = null, auto = false, DWELL = 3600;
+
+  function place() {
+    var t = tabs[cur];
+    ind.style.width = t.offsetWidth + 'px';
+    ind.style.transform = 'translate(' + t.offsetLeft + 'px,' + (t.offsetTop + t.offsetHeight - tabs[0].offsetTop - tabs[0].offsetHeight) + 'px)';
+  }
+  function show(i, focus) {
+    cur = (i + tabs.length) % tabs.length;
+    tabs.forEach(function (t, j) {
+      var on = j === cur;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      panels[j].hidden = !on;
+      panels[j].classList.remove('on');
+    });
+    void panels[cur].offsetWidth; // restart the entry animation
+    panels[cur].classList.add('on');
+    if (focus) tabs[cur].focus();
+    place();
+  }
+  function stop() {
+    auto = false; clearTimeout(timer);
+    tick.classList.remove('run'); tick.style.transform = 'scaleX(0)';
+  }
+  function step(n) {
+    if (!auto) return;
+    tick.classList.remove('run'); tick.style.transform = 'scaleX(0)';
+    void tick.offsetWidth;
+    tick.style.transform = ''; tick.classList.add('run');
+    timer = setTimeout(function () {
+      if (n + 1 >= tabs.length) { stop(); show(0); return; } // one lap, then rest on Neovim
+      show(n + 1); step(n + 1);
+    }, DWELL);
+  }
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { stop(); show(i); });
+    t.addEventListener('keydown', function (e) {
+      var k = e.key, to = null;
+      if (k === 'ArrowRight' || k === 'ArrowDown') to = cur + 1;
+      else if (k === 'ArrowLeft' || k === 'ArrowUp') to = cur - 1;
+      else if (k === 'Home') to = 0;
+      else if (k === 'End') to = tabs.length - 1;
+      if (to === null) return;
+      e.preventDefault(); stop(); show(to, true);
+    });
+  });
+  // any hand on the section ends the tour
+  ['pointerdown', 'focusin', 'wheel', 'touchstart'].forEach(function (ev) {
+    box.addEventListener(ev, function () { if (auto) stop(); }, { passive: true });
+  });
+  box.addEventListener('mouseenter', function () { if (auto) stop(); });
+  window.addEventListener('resize', place);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+
+  show(0);
+  if (motion && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return;
+      io.disconnect();
+      show(0); auto = true; step(0);
+    }, { threshold: 0.45 });
+    io.observe(box.querySelector('.ed-tabs'));
+  }
+})();

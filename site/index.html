@@ -35,7 +35,7 @@
 <header class="top grid">
   <a class="mark" href="./" aria-label="linelore home"><span class="mark-t">l:42</span><span class="mark-sq" aria-hidden="true"></span></a>
   <p class="top-tag">git blame tells you who.<br>linelore tells you why.</p>
-  <nav class="top-nav" aria-label="Main"><a href="docs/">Docs</a><a href="docs/blog/">Blog</a><a href="https://github.com/Blackman99/linelore">GitHub</a></nav>
+  <nav class="top-nav" aria-label="Main"><a href="#editors">Editors</a><a href="docs/">Docs</a><a href="docs/blog/">Blog</a><a href="https://github.com/Blackman99/linelore">GitHub</a></nav>
 </header>
 
 <main id="main">
@@ -87,7 +87,7 @@
     <p class="cmd"><span class="mono">linelore src/requests/utils.py:795</span></p>
     <p class="cmd"><span class="mono">linelore src/requests/utils.py:795 --open</span></p>
     <button type="button" class="copy" id="copy" data-text="pipx install git+https://github.com/Blackman99/linelore">Copy install command</button>
-    <p class="fine">Python 3.9+ and git, no dependencies. Works on <b>GitHub, GitLab and Gitea/Forgejo</b> (Codeberg too), hosted or self-hosted, and reads which one from your remote. Works anonymously on public repos; tokens are optional (<span class="mono">GH_TOKEN</span>, <span class="mono">GITLAB_TOKEN</span>, <span class="mono">GITEA_TOKEN</span>). Pass <span class="mono">file:10-30</span> for a range (commits deduped), <span class="mono">--open</span> to open the PR or MR in your browser, <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag.</p>
+    <p class="fine">Python 3.9+ and git, no dependencies. Works on <b>GitHub, GitLab and Gitea/Forgejo</b> (Codeberg too), hosted or self-hosted, and reads which one from your remote. Works anonymously on public repos; tokens are optional (<span class="mono">GH_TOKEN</span>, <span class="mono">GITLAB_TOKEN</span>, <span class="mono">GITEA_TOKEN</span>). Pass <span class="mono">file:10-30</span> for a range (commits deduped), <span class="mono">--open</span> to open the PR or MR in your browser, <span class="mono">--json</span> for editors and scripts, <span class="mono">--offline</span> for local only, <span class="mono">--rev</span> to blame at a tag. <span class="mono">--summarize</span> adds a paragraph from a model command <i>you</i> configured, printed under a label saying so, after the facts and never mixed into them.</p>
   </div>
 </section>
 
@@ -102,12 +102,75 @@
   </ol>
 </section>
 
-<section class="sect grid" aria-labelledby="c">
+<section class="sect grid editors" id="editors" aria-labelledby="c">
   <p class="sect-k">C</p>
-  <h2 id="c" class="sect-h">Read more</h2>
+  <h2 id="c" class="sect-h">In your editor</h2>
+  <div class="sect-b">
+    <p class="ed-lede">One key on the line you are reading. Neovim and Emacs read <span class="mono">--json</span> and lay it out themselves; VS Code and Helix show the text as it comes. Copy a file from <a class="mono" href="https://github.com/Blackman99/linelore/tree/main/editors">editors/</a>, nothing to install from a marketplace.</p>
+    <div class="ed-tabs" role="tablist" aria-label="Editor"><button type="button" role="tab" class="ed-tab" id="tab-nvim" aria-controls="ed-nvim" aria-selected="true">Neovim</button><button type="button" role="tab" class="ed-tab" id="tab-emacs" aria-controls="ed-emacs" aria-selected="false" tabindex="-1">Emacs</button><button type="button" role="tab" class="ed-tab" id="tab-vscode" aria-controls="ed-vscode" aria-selected="false" tabindex="-1">VS Code</button><button type="button" role="tab" class="ed-tab" id="tab-helix" aria-controls="ed-helix" aria-selected="false" tabindex="-1">Helix</button><span class="ed-ind" aria-hidden="true"></span><span class="ed-tick" aria-hidden="true"></span></div>
+<div class="ed-panel ed-nvim" role="tabpanel" id="ed-nvim" aria-labelledby="tab-nvim" tabindex="0">
+  <div class="ed-say">
+    <p class="ed-name">Neovim</p>
+    <p class="ed-keys mono" aria-label=":Linelore"><span class="k" style="--i:0">:</span><span class="k" style="--i:1">L</span><span class="k" style="--i:2">i</span><span class="k" style="--i:3">n</span><span class="k" style="--i:4">e</span><span class="k" style="--i:5">l</span><span class="k" style="--i:6">o</span><span class="k" style="--i:7">r</span><span class="k" style="--i:8">e</span></p>
+    <p class="ed-alt">or <span class="mono">:'&lt;,'&gt;Linelore</span> on a selection</p>
+    <p class="ed-desc">A float under the cursor, with focus in it. <b>⏎</b> opens the link you are on, <b>o</b> the pull request, <b>y</b> copies, <b>q</b> closes.</p>
+    <p class="ed-path"><a class="mono" href="https://github.com/Blackman99/linelore/tree/main/editors/nvim">editors/nvim/</a></p>
+  </div>
+  <figure class="ed-view">
+    <pre class="ed-code" aria-hidden="true"><span><i>794</i>    If &#x27;value&#x27; is None, do nothing&quot;&quot;&quot;</span><span class="cur"><i>795</i>    value_changed = value is not None</span><span><i>796</i>    old_value: str | None = None</span><span><i>797</i>    if value_changed:</span></pre>
+    <div class="ed-win"><p class="ed-bar"> linelore </p><pre class="ed-out"><span class="t" style="--i:0">src/requests/utils.py:795</span><span style="--i:1">value_changed = value is not None</span><span style="--i:2">&#8203;</span><span style="--i:3"><b>commit</b>    1d7fd6c8b3 · 2017-06-06 · mlcrazy</span><span style="--i:4">          Fixes error swallowing in set_environ</span><span style="--i:5"><b>PR #4134</b>  Raise exceptions in utils.set_environ</span><span style="--i:6">          @mlcrazy · merged 2017-06-09</span><span style="--i:7">          <u>https://github.com/psf/requests/pull/4134</u></span><span style="--i:8">          “fixes #4127”</span><span style="--i:9"><b>fixes</b>     #4127 UnboundLocalError: local variable</span><span style="--i:10">          &#x27;bypass&#x27; referenced before assignment</span><span style="--i:11">          [closed]</span><span style="--i:12">          <u>https://github.com/psf/requests/issues/4127</u></span><span style="--i:13"><b>review</b>    @Lukasa (line 615): We don&#x27;t need this</span><span style="--i:14">          newline.</span><span style="--i:15"><b>review</b>    @Lukasa (line 617): `None` is implicit in</span><span style="--i:16">          `get`, you can leave it out.</span><span style="--i:17"><b>review</b>    @nateprewitt (line 621): @Lukasa what are</span><span style="--i:18">          your thoughts on adding `value_changed =</span><span style="--i:19">          value is not None`, and using that single</span><span style="--i:20">          value for both conditionals? The fact these</span><span style="--i:21">          two checks are bound is implicit and has the</span><span style="--i:22">          potential to get out of sync as soon as one</span><span style="--i:23">          change…</span><span style="--i:24"><b>review</b>    @Lukasa (line 621): Works for me!</span></pre><p class="ed-bar ed-foot"> ⏎ open link · o open PR · y copy · q close </p></div>
+  </figure>
+</div>
+<div class="ed-panel ed-emacs" role="tabpanel" id="ed-emacs" aria-labelledby="tab-emacs" tabindex="0">
+  <div class="ed-say">
+    <p class="ed-name">Emacs</p>
+    <p class="ed-keys mono" aria-label="M-x linelore"><span class="k" style="--i:0">M</span><span class="k" style="--i:1">-</span><span class="k" style="--i:2">x</span><span class="k" style="--i:3">&nbsp;</span><span class="k" style="--i:4">l</span><span class="k" style="--i:5">i</span><span class="k" style="--i:6">n</span><span class="k" style="--i:7">e</span><span class="k" style="--i:8">l</span><span class="k" style="--i:9">o</span><span class="k" style="--i:10">r</span><span class="k" style="--i:11">e</span></p>
+    <p class="ed-alt">with a region for a range; <span class="mono">C-u</span> adds your model's summary</p>
+    <p class="ed-desc">A <span class="mono">*linelore*</span> window below. <b>TAB</b> walks the links, <b>o</b> opens the pull request, <b>w</b> copies, <b>g</b> looks again.</p>
+    <p class="ed-path"><a class="mono" href="https://github.com/Blackman99/linelore/tree/main/editors/emacs">editors/emacs/</a></p>
+  </div>
+  <figure class="ed-view">
+    <pre class="ed-code" aria-hidden="true"><span><i>794</i>    If &#x27;value&#x27; is None, do nothing&quot;&quot;&quot;</span><span class="cur"><i>795</i>    value_changed = value is not None</span><span><i>796</i>    old_value: str | None = None</span><span><i>797</i>    if value_changed:</span></pre>
+    <div class="ed-win"><p class="ed-bar"> *linelore* </p><pre class="ed-out"><span class="t" style="--i:0">src/requests/utils.py:795</span><span style="--i:1">value_changed = value is not None</span><span style="--i:2">&#8203;</span><span style="--i:3"><b>commit</b>    1d7fd6c8b3 · 2017-06-06 · mlcrazy</span><span style="--i:4">          Fixes error swallowing in set_environ</span><span style="--i:5"><b>PR #4134</b>  Raise exceptions in utils.set_environ</span><span style="--i:6">          @mlcrazy · merged 2017-06-09</span><span style="--i:7">          <u>https://github.com/psf/requests/pull/4134</u></span><span style="--i:8">          “fixes #4127”</span><span style="--i:9"><b>fixes</b>     #4127 UnboundLocalError: local variable</span><span style="--i:10">          &#x27;bypass&#x27; referenced before assignment [closed]</span><span style="--i:11">          <u>https://github.com/psf/requests/issues/4127</u></span><span style="--i:12"><b>review</b>    @Lukasa (line 615): We don&#x27;t need this</span><span style="--i:13">          newline.</span><span style="--i:14"><b>review</b>    @Lukasa (line 617): `None` is implicit in</span><span style="--i:15">          `get`, you can leave it out.</span><span style="--i:16"><b>review</b>    @nateprewitt (line 621): @Lukasa what are your</span><span style="--i:17">          thoughts on adding `value_changed = value is</span><span style="--i:18">          not None`, and using that single value for</span><span style="--i:19">          both conditionals? The fact these two checks</span><span style="--i:20">          are bound is implicit and has the potential to</span><span style="--i:21">          get out of sync as soon as one change…</span><span style="--i:22"><b>review</b>    @Lukasa (line 621): Works for me!</span></pre></div>
+  </figure>
+</div>
+<div class="ed-panel ed-vscode" role="tabpanel" id="ed-vscode" aria-labelledby="tab-vscode" tabindex="0">
+  <div class="ed-say">
+    <p class="ed-name">VS Code</p>
+    <p class="ed-keys mono" aria-label="Ctrl+Alt+L"><span class="k" style="--i:0">C</span><span class="k" style="--i:1">t</span><span class="k" style="--i:2">r</span><span class="k" style="--i:3">l</span><span class="k" style="--i:4">+</span><span class="k" style="--i:5">A</span><span class="k" style="--i:6">l</span><span class="k" style="--i:7">t</span><span class="k" style="--i:8">+</span><span class="k" style="--i:9">L</span></p>
+    <p class="ed-alt">or run the task <span class="mono">linelore: a range of lines…</span></p>
+    <p class="ed-desc">Runs as a task in its own terminal panel. <b>Ctrl+Alt+Shift+L</b> opens the pull request instead.</p>
+    <p class="ed-path"><a class="mono" href="https://github.com/Blackman99/linelore/tree/main/editors/vscode">editors/vscode/</a></p>
+  </div>
+  <figure class="ed-view">
+    <pre class="ed-code" aria-hidden="true"><span><i>794</i>    If &#x27;value&#x27; is None, do nothing&quot;&quot;&quot;</span><span class="cur"><i>795</i>    value_changed = value is not None</span><span><i>796</i>    old_value: str | None = None</span><span><i>797</i>    if value_changed:</span></pre>
+    <div class="ed-win"><p class="ed-bar"> TERMINAL · linelore: this line </p><pre class="ed-out"><span class="t" style="--i:0">src/requests/utils.py:795  value_changed = value is not None</span><span style="--i:1">  <b>commit</b>  1d7fd6c8b3  2017-06-06  mlcrazy</span><span style="--i:2">          Fixes error swallowing in set_environ</span><span style="--i:3">  <b>PR #4134</b>  Raise exceptions in utils.set_environ  (@mlcrazy, merged 2017-06-09)</span><span style="--i:4">          <u>https://github.com/psf/requests/pull/4134</u></span><span style="--i:5">          “fixes #4127”</span><span style="--i:6">  <b>fixes #4127</b>  UnboundLocalError: local variable &#x27;bypass&#x27; referenced before assignment [closed]</span><span style="--i:7">          <u>https://github.com/psf/requests/issues/4127</u></span><span style="--i:8">  <b>review</b>  @Lukasa (line 615): We don&#x27;t need this newline.</span><span style="--i:9">  <b>review</b>  @Lukasa (line 617): `None` is implicit in `get`, you can leave it out.</span><span style="--i:10">  <b>review</b>  @nateprewitt (line 621):</span><span style="--i:11">          @Lukasa what are your thoughts on adding</span><span style="--i:12">          `value_changed = value is not None`, and using</span><span style="--i:13">          that single value for both conditionals? The fact</span><span style="--i:14">          these two checks are bound is implicit and has the</span><span style="--i:15">          potential to get out of sync as soon as one</span><span style="--i:16">          change…</span><span style="--i:17">  <b>review</b>  @Lukasa (line 621): Works for me!</span></pre></div>
+  </figure>
+</div>
+<div class="ed-panel ed-helix" role="tabpanel" id="ed-helix" aria-labelledby="tab-helix" tabindex="0">
+  <div class="ed-say">
+    <p class="ed-name">Helix</p>
+    <p class="ed-keys mono" aria-label="space l l"><span class="k" style="--i:0">s</span><span class="k" style="--i:1">p</span><span class="k" style="--i:2">a</span><span class="k" style="--i:3">c</span><span class="k" style="--i:4">e</span><span class="k" style="--i:5">&nbsp;</span><span class="k" style="--i:6">l</span><span class="k" style="--i:7">&nbsp;</span><span class="k" style="--i:8">l</span></p>
+    <p class="ed-alt">on a selection for a range</p>
+    <p class="ed-desc">The answer in a popup, straight from <span class="mono">:sh</span>. <b>space l o</b> opens the pull request. Helix 25.07+.</p>
+    <p class="ed-path"><a class="mono" href="https://github.com/Blackman99/linelore/tree/main/editors/helix">editors/helix/</a></p>
+  </div>
+  <figure class="ed-view">
+    <pre class="ed-code" aria-hidden="true"><span><i>794</i>    If &#x27;value&#x27; is None, do nothing&quot;&quot;&quot;</span><span class="cur"><i>795</i>    value_changed = value is not None</span><span><i>796</i>    old_value: str | None = None</span><span><i>797</i>    if value_changed:</span></pre>
+    <div class="ed-win"><p class="ed-bar"> :sh linelore </p><pre class="ed-out"><span class="t" style="--i:0">src/requests/utils.py:795  value_changed = value is not None</span><span style="--i:1">  <b>commit</b>  1d7fd6c8b3  2017-06-06  mlcrazy</span><span style="--i:2">          Fixes error swallowing in set_environ</span><span style="--i:3">  <b>PR #4134</b>  Raise exceptions in utils.set_environ  (@mlcrazy, merged 2017-06-09)</span><span style="--i:4">          <u>https://github.com/psf/requests/pull/4134</u></span><span style="--i:5">          “fixes #4127”</span><span style="--i:6">  <b>fixes #4127</b>  UnboundLocalError: local variable &#x27;bypass&#x27; referenced before assignment [closed]</span><span style="--i:7">          <u>https://github.com/psf/requests/issues/4127</u></span><span style="--i:8">  <b>review</b>  @Lukasa (line 615): We don&#x27;t need this newline.</span><span style="--i:9">  <b>review</b>  @Lukasa (line 617): `None` is implicit in `get`, you can leave it out.</span><span style="--i:10">  <b>review</b>  @nateprewitt (line 621): @Lukasa what are your thoughts on adding `value_changed = value is not None`, and using that single value for both conditionals? The fact these two checks are bound is implicit and has the potential to get out of sync as soon as one change…</span><span style="--i:11">  <b>review</b>  @Lukasa (line 621): Works for me!</span></pre></div>
+  </figure>
+</div>
+    <p class="fine ed-fine">Each panel is the real output for <span class="mono">psf/requests src/requests/utils.py:795</span>, rendered by that plugin. The JSON fields they read are pinned by tests; CI runs Neovim, Emacs and Helix headless. <a href="docs/editors/">Set-up for all four</a></p>
+  </div>
+</section>
+
+<section class="sect grid" aria-labelledby="d">
+  <p class="sect-k">D</p>
+  <h2 id="d" class="sect-h">Read more</h2>
   <ul class="links sect-b">
     <li><a href="docs/blog/git-blame-says-who-not-why/">git blame tells you who. Here's how to get the why.</a><span>Blog, with the exact API calls and limits</span></li>
     <li><a href="docs/blog/git-blame-says-who-not-why-zh/">git blame 只告诉你是谁改的，linelore 告诉你为什么</a><span>中文版</span></li>
+    <li><a href="docs/editors/">Neovim, Emacs, VS Code, Helix</a><span>Editor set-up, keys, and the JSON fields to build your own</span></li>
     <li><a href="docs/forges/">GitHub, GitLab, Gitea/Forgejo</a><span>Detection, tokens, self-hosted, per-forge limits</span></li>
     <li><a href="docs/">Documentation</a><span>Install, usage, configuration, reference</span></li>
     <li><a href="https://github.com/Blackman99/linelore/releases">Releases</a><span>Wheel and sdist on GitHub</span></li>

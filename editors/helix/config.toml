@@ -1,0 +1,18 @@
+# linelore for Helix 25.07+ (needs the %{...} command expansions).
+# Merge into ~/.config/helix/config.toml.
+#
+#   space l l   why is this line like this? With a multi-line selection
+#               (x, v, ...) it explains every line in it.
+#   space l o   open the pull request in the browser
+#
+# The answer shows in a popup. On Helix 25.01 and older, replace
+# %{selection_line_start}-%{selection_line_end} with a fixed line number:
+# expansions arrived in 25.07.
+
+[keys.normal.space.l]
+l = ":sh linelore --no-color %{buffer_name}:%{selection_line_start}-%{selection_line_end}"
+o = ":sh linelore --open %{buffer_name}:%{cursor_line}"
+
+[keys.select.space.l]
+l = ":sh linelore --no-color %{buffer_name}:%{selection_line_start}-%{selection_line_end}"
+o = ":sh linelore --open %{buffer_name}:%{cursor_line}"
