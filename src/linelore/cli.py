@@ -11,6 +11,7 @@ from .forge import ForgeError, UnknownForge, change_noun, make_forge, resolve_fo
 from .gitops import GitError, blame_lines, dedupe_blames, merge_commit_for, origin_repo, repo_root
 from .lore import build_lore, build_range_lore
 from .render import to_json, to_text
+from . import summarize as summ
 
 DEMO = {
     "forge": "github", "repo": "example/shop", "path": "src/cart.py",
@@ -98,6 +99,42 @@ def do_open(lore, spec, offline=False):
         say("no browser to open here; %s is at %s" % (what, url))
 
 
+def emit(lore, a, color, width, summary_cmd):
+    """Print the facts, then (only if asked) the labelled model summary. Returns 4 if the summary failed."""
+    if summary_cmd is None:
+        print(to_json(lore) if a.json else to_text(lore, color, width=width))
+        return 0
+    argv, source = summary_cmd
+    name = summ.program_name(argv)
+    facts = to_text(lore, False, width=None)
+    if not a.json:
+        print(to_text(lore, color, width=width))
+        sys.stdout.flush()  # the facts first; the model can take a while
+    waiting = sys.stderr.isatty()
+    if waiting:
+        sys.stderr.write("linelore: asking %s for a summary…" % name)
+        sys.stderr.flush()
+    try:
+        text, error = summ.run(argv, source, facts), None
+    except summ.SummarizeError as e:
+        text, error = None, str(e)
+    if waiting:
+        sys.stderr.write("\r\033[K")
+        sys.stderr.flush()
+    if a.json:
+        out = dict(lore)
+        out["model_summary"] = summ.as_json(name, text, error)
+        print(to_json(out))
+    elif text:
+        print(summ.to_text(name, text, color, width=width))
+    if error:
+        sys.stdout.flush()
+        print("linelore: no summary: %s%s" % (error, "" if a.json else "; the lore above is unaffected"),
+              file=sys.stderr)
+        return 4
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="linelore",
@@ -114,6 +151,14 @@ def main(argv=None):
                "  GitLab  GITLAB_TOKEN (gitlab.com only shows review comments to signed-in users)\n"
                "  Gitea   GITEA_TOKEN or FORGEJO_TOKEN\n"
                "\n"
+               "summaries (off unless you ask; linelore has no model of its own):\n"
+               "  linelore src/app.py:42 --summarize-cmd 'llm -m gpt-4o-mini'\n"
+               "  export LINELORE_SUMMARIZE_CMD='ollama run llama3.2'; linelore src/app.py:42 --summarize\n"
+               "  The command gets a prompt plus the lore on stdin; its answer is printed after the facts,\n"
+               "  labelled as model-generated (JSON: a separate \"model_summary\" field).\n"
+               "\n"
+               "exit codes: 0 ok, 1 git error, 2 usage, 3 forge lookup failed, 4 summary failed (facts still printed)\n"
+               "\n"
                "docs: https://blackman99.github.io/linelore/docs/")
     ap.add_argument("target", nargs="?", help="FILE:LINE or FILE:START-END (or 'demo')")
     ap.add_argument("--rev", metavar="REV", help="blame at this revision (default: working tree)")
@@ -128,6 +173,11 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     ap.add_argument("--open", action="store_true", help="also open the PR/MR in your browser (the newest one for a range)")
     ap.add_argument("--offline", action="store_true", help="local git only, no forge API calls")
+    ap.add_argument("--summarize", action="store_true",
+                    help="after the facts, add a summary from YOUR model command ($LINELORE_SUMMARIZE_CMD), "
+                         "clearly labelled as model-generated")
+    ap.add_argument("--summarize-cmd", metavar="CMD",
+                    help="the command to summarize with (reads the prompt on stdin, prints the answer); implies --summarize")
     ap.add_argument("--no-color", action="store_true", help="plain text (also when NO_COLOR is set or output is piped)")
     ap.add_argument("--version", action="version", version="linelore " + __version__)
     a = ap.parse_args(argv)
@@ -135,12 +185,19 @@ def main(argv=None):
     if not a.target:
         ap.print_usage(sys.stderr)
         return 2
+    summary_cmd = None
+    if a.summarize or a.summarize_cmd is not None:
+        try:
+            summary_cmd = summ.resolve_command(a.summarize_cmd)
+        except summ.SummarizeConfigError as e:
+            ap.error(str(e))
+    width = shutil.get_terminal_size((100, 24)).columns if sys.stdout.isatty() else None
     if a.target == "demo":
-        print(to_json(DEMO) if a.json else to_text(DEMO, color))
+        code = emit(DEMO, a, color, width, summary_cmd)
         if a.open:
             sys.stdout.flush()
             print("linelore: demo data is made up, so there is nothing to open", file=sys.stderr)
-        return 0
+        return code
     try:
         path, start, end = parse_target(a.target)
     except argparse.ArgumentTypeError as e:
@@ -198,8 +255,8 @@ def main(argv=None):
         if a.json:
             print("linelore: lookup failed: %s" % e, file=sys.stderr)
         code = 3
-    width = shutil.get_terminal_size((100, 24)).columns if sys.stdout.isatty() else None
-    print(to_json(lore) if a.json else to_text(lore, color, width=width))
+    summary_code = emit(lore, a, color, width, summary_cmd)
+    code = code or summary_code
     if a.open:
         sys.stdout.flush()  # the lore first, then what we opened
         do_open(lore, spec, offline=a.offline or gh is None)
