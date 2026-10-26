@@ -180,7 +180,7 @@ Some honest limits from trying it on real repositories:
 
 - **v0.2 (done)**: line ranges, follow moves/renames, cache API responses per sha.
 - **v0.3 (done)**: GitLab and Gitea/Forgejo backends; `--open` to launch the PR in a browser.
-- **v0.4**: editor snippets (Neovim, VS Code task, Helix, Emacs) on top of `--json`, and an optional, clearly labelled `--summarize` that pipes the collected facts to an LLM command you supply.
+- **v0.4 (done)**: editor snippets (Neovim, VS Code task, Helix, Emacs) on top of `--json`, and an optional, clearly labelled `--summarize` that pipes the collected facts to an LLM command you supply.
 - **v1.0**: stable JSON schema, PyPI and Homebrew.
 
 ## Try it

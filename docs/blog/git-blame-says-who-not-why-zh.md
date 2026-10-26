@@ -180,7 +180,7 @@ JSON 结构目前还没冻结，v1.0 时会稳定下来。
 
 - **v0.2（已完成）**：行范围、跟踪移动/重命名、按 sha 缓存 API 响应。
 - **v0.3（已完成）**：GitLab 与 Gitea/Forgejo 后端；`--open` 直接在浏览器打开 PR。
-- **v0.4**：基于 `--json` 的编辑器片段（Neovim、VS Code task、Helix、Emacs）；可选的 `--summarize`，把收集到的事实交给你自己指定的 LLM 命令，并明确标注是生成内容。
+- **v0.4（已完成）**：基于 `--json` 的编辑器片段（Neovim、VS Code task、Helix、Emacs）；可选的 `--summarize`，把收集到的事实交给你自己指定的 LLM 命令，并明确标注是生成内容。
 - **v1.0**：稳定的 JSON 结构，发布到 PyPI 和 Homebrew。
 
 ## 试一下
