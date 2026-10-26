@@ -46,6 +46,26 @@ jobs:
       - run: pip install ruff
       - run: ruff check src tests --select F,E9
 
+  editors:
+    name: editors (Neovim, Emacs, Helix, VS Code snippets)
+    runs-on: ubuntu-24.04
+    env:
+      LINELORE_EDITORS_REQUIRED: "1"
+      HELIX_VERSION: "25.07.1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq neovim emacs-nox
+      - name: Install Helix ${{ env.HELIX_VERSION }}
+        run: |
+          curl -sSfL "https://github.com/helix-editor/helix/releases/download/$HELIX_VERSION/helix-$HELIX_VERSION-x86_64-linux.tar.xz" | tar -xJ -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/helix-$HELIX_VERSION-x86_64-linux" >> "$GITHUB_PATH"
+      - run: python -m pip install -e ".[dev]"
+      - run: nvim --version | head -1 && emacs --version | head -1 && hx --version
+      - run: python -m pytest -v tests/test_editors.py
+
   build:
     runs-on: ubuntu-latest
     steps:

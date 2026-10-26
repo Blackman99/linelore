@@ -1,0 +1,15 @@
+// Add to your keybindings.json (Preferences: Open Keyboard Shortcuts (JSON)).
+[
+  {
+    "key": "ctrl+alt+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "linelore: this line",
+    "when": "editorTextFocus"
+  },
+  {
+    "key": "ctrl+alt+shift+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "linelore: open the pull request",
+    "when": "editorTextFocus"
+  }
+]

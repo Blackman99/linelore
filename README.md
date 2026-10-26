@@ -60,6 +60,10 @@ internal/commands/packages/download/download.go:290  if file.FileName == fileNam
 
 `file:10-30` for a range (commits deduped), `--open` to open the PR/MR in your browser, `--json` for editors/scripts, `--offline` for local only, `--rev` to blame at a tag. Full docs: <https://blackman99.github.io/linelore/docs/>
 
+### In your editor
+
+One key on the line you're reading. Plugins and snippets for **Neovim** (a float, `:Linelore`), **Emacs** (`M-x linelore`), **VS Code** (a task, `Ctrl+Alt+L`) and **Helix** (`space l l`) are in [`editors/`](editors/); copy one, nothing to install from a marketplace. Neovim and Emacs read `--json`; the fields they use are pinned by tests, and CI runs Neovim, Emacs and Helix headless. [Set-up](https://blackman99.github.io/linelore/docs/editors/)
+
 ### Optional: a summary from your own model
 
 linelore never guesses. If you want one paragraph instead of the whole thread, `--summarize` hands the facts to a model command **you** configured and prints its answer after them, labelled:
